@@ -1,196 +1,436 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <title>Manage Events - Event Finance Manager</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Operations - EventFi</title>
+    <!-- Prevent FOUC for dark mode -->
+    <script>
+        const storedTheme = localStorage.getItem('theme');
+        if (storedTheme === 'dark' || (!storedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+    </script>
     <link rel="stylesheet" href="style.css">
     <script src="config.js"></script>
-</head>
+    <style>
+        .page-split {
+            display: grid;
+            grid-template-columns: minmax(0, 5fr) minmax(0, 5fr);
+            gap: 2rem;
+            align-items: start;
+        }
+        @media (max-width: 900px) {
+            .page-split { grid-template-columns: 1fr; }
+        }
 
+        #imagePreview {
+            max-width: 100%;
+            max-height: 150px;
+            border-radius: var(--radius-sm);
+            margin-top: 1rem;
+            display: none;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+        }
+
+        .event-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            margin-bottom: 0.75rem;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            background: var(--bg-card);
+        }
+
+        .event-list-item:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .event-list-item.selected {
+            border-color: var(--primary-color);
+            background: var(--primary-light);
+            border-width: 2px;
+        }
+        
+        html[data-theme="dark"] .event-list-item.selected {
+            background: rgba(99, 102, 241, 0.15);
+        }
+    </style>
+</head>
 <body>
 
-    <!-- Professional Navbar -->
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- Custom Confirm Modal -->
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal-content text-center">
+            <div style="font-size:3rem; margin-bottom:1rem;">🗑️</div>
+            <h3 style="margin-bottom: 0.5rem; color:var(--text-dark);">Delete Operations Log?</h3>
+            <p class="text-muted" style="margin-bottom: 2rem;">This action will permanently delete this event and all its associated expenses. This cannot be undone.</p>
+            <div class="flex-row justify-between w-full">
+                <button class="btn btn-outline" style="flex:1;" onclick="closeModal()">Cancel</button>
+                <button class="btn" style="flex:1; background:var(--danger); color:white; border:none;" id="confirmDeleteBtn">Yes, Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navbar -->
     <nav class="navbar">
         <div class="brand-logo">
-            <span style="font-size: 1.8rem;">🔷</span> EventFi
+            <span>🔷</span> EventFi
         </div>
         <div class="nav-links">
             <a href="index.html" class="nav-link">Home</a>
+            <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+                🌙
+            </button>
         </div>
     </nav>
 
     <div class="container">
-        <div class="hero-section"
-            style="padding: 3rem 2rem; margin-bottom: 2rem; text-align: left; align-items: flex-start;">
-            <div>
-                <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem; color: #111827;">Event Finance
-                    Managers</h1>
-                <p style="color: var(--text-muted); font-size: 1.1rem;">Create new events, log daily expenses, and
-                    manage your portfolio.</p>
-            </div>
+        
+        <div style="margin-bottom: 3rem;">
+            <h1 style="font-size: 2.5rem; font-weight: 800; color: var(--text-dark); margin-bottom: 0.5rem;">Operations Manager</h1>
+            <p class="text-muted" style="font-size: 1.1rem; max-width: 600px;">Allocate budgets, initialize new events, and systematically log physical and digital receipts directly into the database.</p>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+        <div class="page-split">
 
-            <!-- LEFT COLUMN: CREATE EVENT -->
-            <div>
-                <div class="card">
-                    <div class="card-title">🚀 Create New Event</div>
+            <!-- LEFT COLUMN: CREATE & BROWSE -->
+            <div style="display:flex; flex-direction:column; gap:2rem;">
+                
+                <!-- Create Form -->
+                <div class="card" style="margin: 0; position:relative; overflow:hidden;">
+                    <!-- subtle background accent -->
+                    <div style="position:absolute; top:-50px; right:-50px; width:150px; height:150px; background:var(--primary-gradient); filter:blur(60px); opacity:0.1; pointer-events:none;"></div>
+                    
+                    <div class="card-title">🚀 Create Event Portfolio</div>
+                    
                     <div class="form-group">
-                        <label style="font-weight: 600; font-size: 0.9rem; margin-bottom: 5px; display: block;">Event
-                            Name</label>
-                        <input id="name" class="form-control" placeholder="e.g. Annual Tech Summit 2025">
+                        <label class="form-label">Project Name</label>
+                        <input id="name" class="form-control" placeholder="e.g. Annual Tech Summit 2025" oninput="removeError('name')">
+                        <div class="error-text" id="nameError">Name is required</div>
                     </div>
+                    
                     <div class="form-group">
-                        <label style="font-weight: 600; font-size: 0.9rem; margin-bottom: 5px; display: block;">Total
-                            Budget (₹)</label>
-                        <input id="budget" type="number" class="form-control" placeholder="e.g. 500000">
+                        <label class="form-label">Total Allocated Budget (₹)</label>
+                        <input id="budget" type="number" class="form-control" placeholder="e.g. 500000" oninput="removeError('budget')">
+                        <div class="error-text" id="budgetError">Valid budget > 0 is required</div>
                     </div>
-                    <button onclick="submitNewEvent()" class="btn btn-primary w-full">Create Event</button>
-                    <p id="msg" class="mt-4 text-center" style="font-weight: 500;"></p>
+                    
+                    <button onclick="submitNewEvent()" class="btn btn-primary w-full" id="createBtn">Initialize Event</button>
                 </div>
 
-                <!-- ALL EVENTS LIST (Compact) -->
-                <div class="card">
+                <!-- Existing Events -->
+                <div class="card" style="margin: 0;">
                     <div class="flex-row justify-between mb-4">
-                        <div class="card-title">Existing Events</div>
-                        <button onclick="loadAllEvents()" class="btn btn-outline" style="font-size: 0.8rem;">Refresh
-                            List</button>
+                        <div class="card-title" style="margin: 0;">Active Portfolios</div>
+                        <button onclick="loadAllEvents()" class="btn btn-outline" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">↺ Refresh</button>
                     </div>
-                    <ul id="eventsList" style="list-style: none; padding: 0; max-height: 300px; overflow-y: auto;">
-                        <li style="color: var(--text-muted); text-align: center;">Click refresh to load events.</li>
-                    </ul>
+                    
+                    <div id="eventsList" style="max-height: 400px; overflow-y:auto; padding-right:5px;">
+                        <div class="text-center text-muted" style="padding:2rem;">Loading portfolios...</div>
+                    </div>
                 </div>
+
             </div>
 
-            <!-- RIGHT COLUMN: ADD EXPENSE -->
+            <!-- RIGHT COLUMN: EXPENSE SUBMISSION -->
             <div>
-                <div class="card" style="border-top: 4px solid var(--primary);">
-                    <div class="card-title">💸 Log Expense</div>
-                    <p id="selectedEventLabel"
-                        style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem; background: #eff6ff; padding: 0.5rem; border-radius: 4px;">
-                        Step 1: Select an event from the list on the left.
-                    </p>
+                <div class="card" style="margin: 0; border-top: 4px solid var(--primary-color); height: 100%;">
+                    <div class="card-title">💸 Submit Expense Ticket</div>
+                    
+                    <!-- Context Switcher Alert -->
+                    <div id="selectedEventLabel" style="background: var(--slate-100); color: var(--slate-600); border: 1px dashed var(--slate-300); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 2rem; font-size: 0.95rem; text-align:center;">
+                        Please select an event portfolio from the left to begin submitting expenses.
+                    </div>
 
                     <input id="expenseEventId" type="hidden">
 
                     <div class="form-group">
-                        <label style="font-weight: 600; font-size: 0.9rem; margin-bottom: 5px; display: block;">Amount
-                            (₹)</label>
-                        <input id="expenseAmount" type="number" class="form-control" placeholder="0.00">
+                        <label class="form-label">Amount Spent (₹)</label>
+                        <input id="expenseAmount" type="number" class="form-control" placeholder="0.00" oninput="removeError('expenseAmount')">
+                        <div class="error-text" id="expenseAmountError">Valid amount is required</div>
                     </div>
 
                     <div class="form-group">
-                        <label
-                            style="font-weight: 600; font-size: 0.9rem; margin-bottom: 5px; display: block;">Category</label>
-                        <input id="expenseCategory" class="form-control" placeholder="e.g. Venue, Catering, Logistics">
+                        <label class="form-label">Category</label>
+                        <select id="expenseCategory" class="form-control" onchange="removeError('expenseCategory')">
+                            <option value="" disabled selected>Select a category...</option>
+                            <option value="Venue">Venue & Operations</option>
+                            <option value="Catering">Food & Catering</option>
+                            <option value="Logistics">Transport & Logistics</option>
+                            <option value="Marketing">Marketing</option>
+                            <option value="Audio/Visual">Audio & Visual</option>
+                            <option value="Misc">Miscellaneous</option>
+                        </select>
+                        <div class="error-text" id="expenseCategoryError">Category is required</div>
                     </div>
 
                     <div class="form-group">
-                        <label style="font-weight: 600; font-size: 0.9rem; margin-bottom: 5px; display: block;">Receipt
-                            (Optional)</label>
-                        <input id="expenseReceipt" type="file" class="form-control" style="padding: 0.5rem;">
+                        <label class="form-label">Receipt Proof (Image)</label>
+                        
+                        <div class="drop-zone" id="dropZone">
+                            <span class="drop-zone-icon">📄</span>
+                            <span class="text-muted" id="dropZoneText">Click or Drag & Drop to upload receipt file</span>
+                            <input type="file" id="expenseReceipt" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; opacity: 0; cursor: pointer;" accept="image/*">
+                        </div>
+                        <div style="display:flex; justify-content:center;">
+                            <img id="imagePreview" alt="Receipt Preview">
+                        </div>
                     </div>
 
-                    <button onclick="addExpense()" class="btn btn-primary w-full">Add Expense</button>
-                    <p id="expenseMsg" class="mt-4 text-center"></p>
+                    <button onclick="addExpense()" class="btn btn-primary w-full" id="expenseBtn" style="margin-top:1rem; opacity: 0.5; pointer-events:none;">Submit Ticket 🔒</button>
+                    
                 </div>
             </div>
 
         </div>
     </div>
 
+    <!-- UI Scripts -->
     <script>
-        // Use API_BASE_URL from config.js
         const BASE_URL = API_BASE_URL;
+        
+        /* -- Global UI Utilities -- */
+        const themeToggle = document.getElementById('themeToggle');
+        const rootElement = document.documentElement;
 
-        function submitNewEvent() {
-            const nameInput = document.getElementById("name");
-            const budgetInput = document.getElementById("budget");
+        themeToggle.addEventListener('click', () => {
+            let newTheme = rootElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            rootElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            themeToggle.innerHTML = newTheme === 'dark' ? '☀️' : '🌙';
+        });
+        if(rootElement.getAttribute('data-theme') === 'dark') themeToggle.innerHTML = '☀️';
 
-            fetch(`${BASE_URL}/events/create`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    name: nameInput.value,
-                    totalBudget: budgetInput.value
-                })
-            })
-                .then(res => res.json())
-                .then(data => {
-                    const msg = document.getElementById("msg");
-                    msg.innerText = "Event Created! ID: " + data._id;
-                    msg.style.color = "#10b981";
-                    // Auto-select
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerHTML = `<span>${type==='success'?'✅':(type==='error'?'❌':'⚠️')}</span> <div>${message}</div>`;
+            container.appendChild(toast);
+            setTimeout(() => { toast.classList.add('fade-out'); toast.addEventListener('animationend', () => toast.remove()); }, 3500);
+        }
+
+        function removeError(id) {
+            document.getElementById(id).classList.remove('is-invalid');
+            document.getElementById(id+'Error').style.display = 'none';
+        }
+
+        function triggerError(id, msg) {
+            document.getElementById(id).classList.add('is-invalid');
+            document.getElementById(id+'Error').innerText = msg;
+            document.getElementById(id+'Error').style.display = 'block';
+        }
+
+        /* -- Modals -- */
+        let eventToDelete = null;
+        function openDeleteModal(id) {
+            eventToDelete = id;
+            document.getElementById('confirmModal').classList.add('active');
+        }
+        function closeModal() {
+            eventToDelete = null;
+            document.getElementById('confirmModal').classList.remove('active');
+        }
+        document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
+            if(!eventToDelete) return;
+            const originalText = document.getElementById('confirmDeleteBtn').innerText;
+            document.getElementById('confirmDeleteBtn').innerText = "Deleting...";
+            try {
+                const res = await fetch(`${BASE_URL}/events/delete/${eventToDelete}`, { method: "DELETE" });
+                if(res.ok) {
+                    showToast('Portfolio terminated successfully');
+                    document.getElementById('expenseEventId').value = ""; // clear selection if active
+                    unlockExpenseForm(""); 
+                    loadAllEvents();
+                } else {
+                    showToast('Failed to delete', 'error');
+                }
+            } catch (err) {
+                showToast('API Error during deletion', 'error');
+            } finally {
+                document.getElementById('confirmDeleteBtn').innerText = originalText;
+                closeModal();
+            }
+        });
+
+        /* -- Drag & Drop Logic -- */
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('expenseReceipt');
+        const imgPreview = document.getElementById('imagePreview');
+        const dropText = document.getElementById('dropZoneText');
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evName => {
+            dropZone.addEventListener(evName, (e) => { e.preventDefault(); e.stopPropagation(); }, false);
+        });
+        ['dragenter', 'dragover'].forEach(evName => {
+            dropZone.addEventListener(evName, () => dropZone.classList.add('dragover'), false);
+        });
+        ['dragleave', 'drop'].forEach(evName => {
+            dropZone.addEventListener(evName, () => dropZone.classList.remove('dragover'), false);
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            const file = e.dataTransfer.files[0];
+            fileInput.files = e.dataTransfer.files; 
+            handleFilePreview(file);
+        });
+        fileInput.addEventListener('change', function() {
+            if(this.files && this.files[0]) handleFilePreview(this.files[0]);
+        });
+
+        function handleFilePreview(file) {
+            if(file && file.type.startsWith('image/')) {
+                dropText.innerText = file.name;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    imgPreview.src = e.target.result;
+                    imgPreview.style.display = 'block';
+                }
+                reader.readAsDataURL(file);
+            } else {
+                dropText.innerText = "Please upload an image file.";
+                imgPreview.style.display = 'none';
+                fileInput.value = "";
+            }
+        }
+        function clearFilePreview() {
+            dropText.innerText = "Click or Drag & Drop to upload receipt file";
+            imgPreview.style.display = 'none';
+            imgPreview.src = "";
+            fileInput.value = "";
+        }
+
+        /* -- Application Logic --*/
+        
+        async function submitNewEvent() {
+            const name = document.getElementById("name").value.trim();
+            const budgetStr = document.getElementById("budget").value;
+            let isValid = true;
+
+            if(!name) { triggerError('name', 'Portfolio name required'); isValid = false; }
+            if(!budgetStr || isNaN(budgetStr) || Number(budgetStr) <= 0) { triggerError('budget', 'Valid budget required'); isValid = false; }
+
+            if(!isValid) return;
+
+            const btn = document.getElementById("createBtn");
+            btn.innerHTML = `<span style="display:inline-block; animation: spin 1s linear infinite;">⏳</span> Initializing...`;
+
+            try {
+                const res = await fetch(`${BASE_URL}/events/create`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name, totalBudget: Number(budgetStr) })
+                });
+
+                if(res.ok) {
+                    const data = await res.json();
+                    showToast('Portfolio initialized successfully!', 'success');
+                    
+                    // Reset Form
+                    document.getElementById("name").value = "";
+                    document.getElementById("budget").value = "";
+                    
+                    // Soft select new event
                     selectEvent(data._id, data.name);
                     loadAllEvents();
-                })
-                .catch(err => {
-                    document.getElementById("msg").innerText = "Error creating event";
-                    console.error(err);
-                });
+                } else {
+                    showToast('Server rejected the request', 'error');
+                }
+            } catch (err) {
+                showToast("Connection failed", "error");
+            } finally {
+                btn.innerHTML = "Initialize Event";
+            }
         }
 
         async function loadAllEvents() {
             const list = document.getElementById("eventsList");
-            list.innerHTML = "<div class='text-center'>Loading...</div>";
+            list.innerHTML = `<div class="skeleton" style="height: 60px; margin-bottom:10px;"></div><div class="skeleton" style="height: 60px; margin-bottom:10px;"></div><div class="skeleton" style="height: 60px;"></div>`;
+            
             try {
                 const res = await fetch(`${BASE_URL}/events`);
                 const events = await res.json();
                 list.innerHTML = "";
 
                 if (events.length === 0) {
-                    list.innerHTML = "<li class='text-center'>No events found.</li>";
+                    list.innerHTML = `
+                      <div class="text-center" style="padding: 2rem;">
+                         <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="var(--slate-400)" stroke-width="1.5" style="margin-bottom:1rem;">
+                            <path d="M19 11H5M19 11C20.1046 11 21 11.8954 21 13V19C21 20.1046 20.1046 21 19 21H5C3.89543 21 3 20.1046 3 19V13C3 11.8954 3.89543 11 5 11M19 11V9C19 7.89543 18.1046 7 17 7M5 11V9C5 7.89543 5.89543 7 7 7M7 7V5C7 3.89543 7.89543 3 9 3H15C16.1046 3 17 3.89543 17 5V7M7 7H17" />
+                         </svg>
+                         <div class="text-muted">No operating portfolios exist yet.<br>Create one above to begin.</div>
+                      </div>`;
                     return;
                 }
 
+                // Get current active selection to highlight
+                const activeId = document.getElementById("expenseEventId").value;
+
                 events.forEach(e => {
-                    const li = document.createElement("li");
-                    li.className = "flex-row justify-between";
-                    li.style.padding = "0.75rem";
-                    li.style.borderBottom = "1px solid #f3f4f6";
-                    li.style.cursor = "pointer";
-                    li.style.borderRadius = "4px";
-                    li.style.marginBottom = "5px";
+                    const el = document.createElement('div');
+                    el.className = `event-list-item ${e._id === activeId ? 'selected' : ''}`;
+                    el.onclick = () => selectEvent(e._id, e.name);
 
-                    li.onclick = () => selectEvent(e._id, e.name);
-
-                    li.innerHTML = `
+                    el.innerHTML = `
                         <div>
-                            <div style="font-weight: 600;">${e.name}</div>
-                            <div style="font-size: 0.75rem; color: #9ca3af;">ID: ${e._id}</div>
+                            <div style="font-weight: 600; color:var(--text-dark);">${e.name}</div>
+                            <div class="text-muted" style="font-size: 0.8rem; font-family: monospace; margin-top:2px;">${e._id}</div>
+                            <div style="font-size: 0.8rem; color: var(--primary-color); font-weight:600; margin-top:2px;">₹${e.totalBudget.toLocaleString()} Total</div>
                         </div>
-                        <button onclick="deleteEvent('${e._id}', event)" style="color: #ef4444; background: none; border: none; font-size: 0.8rem; cursor: pointer;">Delete</button>
+                        <button onclick="event.stopPropagation(); openDeleteModal('${e._id}')" class="btn btn-outline" style="padding:0.35rem; border-color:transparent; color:var(--danger);" title="Delete Portfolio">
+                            <span style="font-size:1.2rem;">🗑️</span>
+                        </button>
                     `;
-                    // Hover effect via js or css class
-                    li.onmouseover = () => li.style.background = "#f9f9f9";
-                    li.onmouseout = () => li.style.background = "transparent";
-
-                    list.appendChild(li);
+                    list.appendChild(el);
                 });
             } catch (err) {
-                list.innerHTML = "Error loading events.";
+                list.innerHTML = `<div class="text-danger p-4 text-center">Connection error fetching events.</div>`;
             }
         }
 
         function selectEvent(id, name) {
             document.getElementById("expenseEventId").value = id;
-            const label = document.getElementById("selectedEventLabel");
-            label.innerHTML = `Selected Event: <strong>${name}</strong>`;
-            label.style.background = "#dbeafe";
-            label.style.color = "#1e40af";
-            label.style.border = "1px solid #93c5fd";
+            unlockExpenseForm(name);
+            loadAllEvents(); // re-render list to apply 'selected' class mapping visually
         }
 
-        async function deleteEvent(id, event) {
-            event.stopPropagation();
-            if (!confirm("Delete this event and all its expenses?")) return;
+        function unlockExpenseForm(name) {
+            const label = document.getElementById("selectedEventLabel");
+            const btn = document.getElementById("expenseBtn");
 
-            try {
-                await fetch(`${BASE_URL}/events/delete/${id}`, { method: "DELETE" });
-                loadAllEvents();
-            } catch (err) {
-                alert("Error deleting event");
+            if(!name) { // Reset state
+               label.innerHTML = `Please select an event portfolio from the left to begin submitting expenses.`;
+               label.style.background = "var(--slate-100)";
+               label.style.borderColor = "var(--slate-300)";
+               label.style.color = "var(--slate-600)";
+               btn.style.opacity = "0.5";
+               btn.style.pointerEvents = "none";
+               btn.innerHTML = `Submit Ticket 🔒`;
+            } else { // Active State
+                label.innerHTML = `Currently modifying: <strong>${name}</strong>`;
+                label.style.background = "var(--primary-light)";
+                label.style.borderColor = "var(--primary-color)";
+                label.style.color = "var(--primary-color-dark)";
+                // Update dark mode specific overrides simply using CSS cascading isn't dynamic inline cleanly, but glass applies:
+                if(rootElement.getAttribute('data-theme') === 'dark'){
+                     label.style.background = "rgba(99, 102, 241, 0.15)";
+                     label.style.color = "var(--text-dark)";
+                }
+
+                btn.style.opacity = "1";
+                btn.style.pointerEvents = "auto";
+                btn.innerHTML = `Submit Ticket`;
             }
         }
 
@@ -198,50 +438,57 @@
             const eventId = document.getElementById("expenseEventId").value;
             const amount = document.getElementById("expenseAmount").value;
             const category = document.getElementById("expenseCategory").value;
-            const receipt = document.getElementById("expenseReceipt").files[0];
-            const msg = document.getElementById("expenseMsg");
+            const receipt = fileInput.files[0];
+            
+            let isValid = true;
 
-            if (!eventId) {
-                alert("Please select an event from the list on the left first.");
-                return;
-            }
-            if (!amount || !category) {
-                msg.innerText = "Please fill in Amount and Category";
-                msg.style.color = "red";
-                return;
-            }
+            if(!eventId){ showToast("No portfolio selected!", "error"); return; }
+            if(!amount || isNaN(amount) || amount <= 0){ triggerError('expenseAmount', 'Valid amount is required'); isValid = false; }
+            if(!category){ triggerError('expenseCategory', 'Category is required'); isValid = false; }
+            
+            if(!isValid) return;
+
+            const btn = document.getElementById("expenseBtn");
+            btn.innerHTML = `<span style="display:inline-block; animation: spin 1s linear infinite;">⏳</span> Uploading...`;
+            btn.disabled = true;
 
             const formData = new FormData();
             formData.append("eventId", eventId);
             formData.append("amount", amount);
             formData.append("category", category);
-            if (receipt) formData.append("receipt", receipt);
+            if(receipt) formData.append("receipt", receipt);
 
             try {
                 const res = await fetch(`${BASE_URL}/expenses/add`, {
                     method: "POST",
                     body: formData
                 });
+                
                 if (res.ok) {
-                    msg.innerText = "Expense added successfully!";
-                    msg.style.color = "#10b981";
+                    showToast("Expense documented successfully!", "success");
+                    // Reset fields manually
                     document.getElementById("expenseAmount").value = "";
                     document.getElementById("expenseCategory").value = "";
-                    document.getElementById("expenseReceipt").value = "";
+                    clearFilePreview();
                 } else {
-                    const errData = await res.json();
-                    msg.innerText = "Error: " + (errData.message || "Failed");
-                    msg.style.color = "red";
+                    const errData = await res.json().catch(()=>({}));
+                    showToast(errData.message || "Failed to process expense", "error");
                 }
             } catch (err) {
-                msg.innerText = "Error adding expense.";
-                console.error(err);
+                showToast("Connection to server failed.", "error");
+            } finally {
+                btn.innerHTML = "Submit Ticket";
+                btn.disabled = false;
             }
         }
 
-        // Load events on start
+        // Initialize lists immediately
         loadAllEvents();
+
+        // Keyframe CSS inject for spinning dynamically in buttons
+        const styleSheet = document.createElement("style");
+        styleSheet.innerText = `@keyframes spin { 100% { transform:rotate(360deg); } }`;
+        document.head.appendChild(styleSheet);
     </script>
 </body>
-
 </html>

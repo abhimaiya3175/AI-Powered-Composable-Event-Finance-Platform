@@ -1,104 +1,245 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Event Finance Manager</title>
+    <title>EventFi - Finance Control for Every Event</title>
+    <!-- Prevent FOUC for dark mode -->
+    <script>
+        const storedTheme = localStorage.getItem('theme');
+        if (storedTheme === 'dark' || (!storedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+    </script>
     <link rel="stylesheet" href="style.css">
     <script src="config.js"></script>
     <style>
+        .role-card-wrapper {
+            position: relative;
+            transform-style: preserve-3d;
+            perspective: 1000px;
+        }
+
         .role-card {
-            background: white;
+            background: var(--bg-glass);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             padding: 3rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-md);
             text-align: center;
             text-decoration: none;
             color: inherit;
-            transition: all 0.3s ease;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
             border: 1px solid var(--border-color);
             display: flex;
             flex-direction: column;
             align-items: center;
             height: 100%;
+            position: relative;
+            z-index: 1;
         }
 
         .role-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            border-color: var(--primary);
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary-color);
         }
 
         .icon-circle {
             width: 80px;
             height: 80px;
-            background: #eff6ff;
-            color: var(--primary);
-            border-radius: 50%;
+            background: var(--primary-light);
+            border-radius: var(--radius-full);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2rem;
+            font-size: 2.5rem;
             margin-bottom: 1.5rem;
+            transition: transform 0.3s ease;
+        }
+        
+        html[data-theme="dark"] .icon-circle {
+            background: rgba(99, 102, 241, 0.2);
+        }
+
+        .role-card:hover .icon-circle {
+            transform: scale(1.1) rotate(5deg);
         }
 
         .role-title {
             font-size: 1.5rem;
-            font-weight: 700;
+            font-weight: 800;
             margin-bottom: 0.5rem;
-            color: #111827;
+            color: var(--text-dark);
         }
 
         .role-desc {
-            color: #6b7280;
+            color: var(--text-muted);
             margin-bottom: 2rem;
-            line-height: 1.5;
+            line-height: 1.6;
+        }
+
+        .badge-popular {
+            position: absolute;
+            top: -12px;
+            right: 20px;
+            background: var(--primary-gradient);
+            color: white;
+            padding: 4px 12px;
+            border-radius: var(--radius-full);
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            box-shadow: var(--shadow-md);
+            z-index: 2;
+        }
+
+        /* Features Section */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-top: 5rem;
+        }
+        .feature-item {
+            text-align: center;
+            padding: 2rem;
+            border-radius: var(--radius-lg);
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+        }
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        .fade-in-element {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+        .fade-in-element.visible {
+            opacity: 1;
+            transform: translateY(0);
         }
     </style>
 </head>
-
 <body>
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
 
     <!-- Navbar -->
     <nav class="navbar">
         <div class="brand-logo">
-            <span style="font-size: 1.8rem;">🔷</span> EventFi
+            <span>🔷</span> EventFi
         </div>
-
+        <div class="nav-links">
+            <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+                🌙
+            </button>
+        </div>
     </nav>
 
-    <div class="container" style="min-height: 80vh; display: flex; flex-direction: column; justify-content: center;">
+    <div class="container" style="min-height: 90vh;">
 
-        <div style="text-align: center; margin-bottom: 4rem;">
-            <h1 style="font-size: 2.5rem; font-weight: 800; color: #111827; margin-bottom: 1rem;">Select Your Role</h1>
-            <p style="color: #6b7280; font-size: 1.1rem;">Choose a workspace to continue</p>
+        <!-- Hero -->
+        <div class="hero-section">
+            <div class="hero-mesh"></div>
+            <div class="hero-content" style="max-width: 100%; text-align: center; margin: 0 auto;">
+                <h1 class="hero-title fade-in-element">Finance Control for <span>Every Event</span></h1>
+                <p class="hero-subtitle fade-in-element" style="transition-delay: 100ms; max-width: 600px; margin-left: auto; margin-right: auto;">
+                    Seamlessly manage budgets, track operational expenses, and detect anomalies with our AI-powered finance platform.
+                </p>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; max-width: 900px; margin: 3rem auto 0 auto; width: 100%;" class="fade-in-element" style="transition-delay: 200ms;">
+                    <!-- Card 1 -->
+                    <div class="role-card-wrapper">
+                        <div class="badge-popular">Popular</div>
+                        <a href="dashboard.html" class="role-card">
+                            <div class="icon-circle">📊</div>
+                            <div class="role-title">Event Admin</div>
+                            <div class="role-desc">Monitor project budgets, visualize expenses, track analytics, and review AI fraud alerts.</div>
+                            <span class="btn btn-primary" style="width: 100%;">Go to Dashboard</span>
+                        </a>
+                    </div>
+        
+                    <!-- Card 2 -->
+                    <div class="role-card-wrapper">
+                        <a href="add-event.html" class="role-card">
+                            <div class="icon-circle">🛠️</div>
+                            <div class="role-title">Finance Managers</div>
+                            <div class="role-desc">Execute event operations, log daily expenses safely, and upload receipts in real-time.</div>
+                            <span class="btn btn-outline" style="width: 100%;">Manage Operations</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div
-            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; max-width: 900px; margin: 0 auto; width: 100%;">
-
-            <!-- Card 1: Event Admin -->
-            <a href="dashboard.html" class="role-card">
-                <div class="icon-circle">📊</div>
-                <div class="role-title">Event Admin</div>
-                <div class="role-desc">Monitor project budgets, visualize expenses, and track operational metrics.</div>
-                <span class="btn btn-primary">Go to Dashboard</span>
-            </a>
-
-            <!-- Card 2: Event Finance Managers -->
-            <a href="add-event.html" class="role-card">
-                <div class="icon-circle">🛠️</div>
-                <div class="role-title">Event Finance Managers</div>
-                <div class="role-desc">Execute event operations, log daily expenses, and manage financial records.</div>
-                <span class="btn btn-outline" style="border-color: var(--primary); color: var(--primary);">Manage
-                    Operations</span>
-            </a>
-
+        <!-- Extra Marketing Fluff to make it look like a SaaS landing page -->
+        <div class="features-grid fade-in-element">
+            <div class="feature-item">
+                <div class="feature-icon">⚡</div>
+                <h3 style="margin-bottom: 0.5rem;">Track Instantly</h3>
+                <p class="text-muted">Log expenses directly from the floor and see them mapped to your budgets instantly.</p>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">🤖</div>
+                <h3 style="margin-bottom: 0.5rem;">AI Detection</h3>
+                <p class="text-muted">We use advanced pattern matching to detect anomalous spending right when it happens.</p>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">📈</div>
+                <h3 style="margin-bottom: 0.5rem;">Clear Reporting</h3>
+                <p class="text-muted">A clear, modern dashboard to prove exactly where funds are being allocated seamlessly.</p>
+            </div>
         </div>
 
     </div>
 
-</body>
+    <!-- UI Core Script -->
+    <script>
+        // Dark Mode Toggle Logic
+        const themeToggle = document.getElementById('themeToggle');
+        const rootElement = document.documentElement;
 
+        function updateToggleIcon() {
+            const isDark = rootElement.getAttribute('data-theme') === 'dark';
+            themeToggle.innerHTML = isDark ? '☀️' : '🌙';
+        }
+
+        updateToggleIcon();
+
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = rootElement.getAttribute('data-theme');
+            let newTheme = 'light';
+            if (currentTheme !== 'dark') {
+                newTheme = 'dark';
+            }
+            rootElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateToggleIcon();
+        });
+
+        // Intersection Observer for scroll fades
+        document.addEventListener('DOMContentLoaded', () => {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            document.querySelectorAll('.fade-in-element').forEach((el) => {
+                observer.observe(el);
+                // Also just manually trigger them if they are above fold immediately
+                setTimeout(() => el.classList.add('visible'), 100);
+            });
+        });
+    </script>
+</body>
 </html>

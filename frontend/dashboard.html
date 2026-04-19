@@ -1,175 +1,487 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Event Finance Manager - Dashboard</title>
+    <!-- Prevent FOUC for dark mode -->
+    <script>
+        const storedTheme = localStorage.getItem('theme');
+        if (storedTheme === 'dark' || (!storedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+    </script>
     <link rel="stylesheet" href="style.css">
     <script src="config.js"></script>
+    <style>
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        @media (max-width: 640px) {
+            .dashboard-header { flex-direction: column; align-items: flex-start; }
+            .event-selector { width: 100%; }
+            .event-selector input { flex-grow: 1; }
+        }
+        .filter-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        .filter-bar input {
+            max-width: 250px;
+        }
+    </style>
 </head>
-
 <body>
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
 
     <!-- Navbar -->
     <nav class="navbar">
         <div class="brand-logo">
-            <span style="font-size: 1.8rem;">🔷</span> EventFi
+            <span>🔷</span> EventFi
         </div>
         <div class="nav-links">
             <a href="index.html" class="nav-link">Home</a>
+            <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+                🌙
+            </button>
         </div>
     </nav>
 
     <div class="container">
-
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-            <h1 style="font-weight: 800; font-size: 2.5rem; margin: 0;">Event Admin Dashboard</h1>
+        <div class="dashboard-header">
+            <div>
+                <h1 style="font-weight: 800; font-size: 2rem; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                    Admin Dashboard
+                </h1>
+                <p class="text-muted" style="margin-top: 0.25rem;">Monitor budget utilization and AI anomaly detection</p>
+            </div>
 
             <!-- Event Selector -->
-            <div style="display: flex; gap: 10px;">
+            <div class="event-selector" style="display: flex; gap: 0.5rem; align-items: center;">
                 <input id="eventId" class="form-control" placeholder="Paste Event ID" style="width: 250px;">
-                <button onclick="loadDashboard()" class="btn btn-primary">Load Event</button>
+                <button onclick="loadDashboard()" class="btn btn-primary" id="loadBtn">Load Panel</button>
             </div>
         </div>
 
-        <!-- Stats Grid (Budget Summary) -->
-        <div class="stats-grid card" style="display: flex; justify-content: space-around; padding: 3rem;">
-            <div class="stat-item">
-                <h3 style="color: var(--primary);">₹<span id="budget">0</span></h3>
-                <p>Total Budget</p>
+        <!-- Initial Placeholder State using skeletons -->
+        <div id="placeholderState">
+            <div class="stats-grid">
+                <div class="stat-item"><div class="skeleton" style="height: 15px; width: 60%; margin-bottom: 10px;"></div><div class="skeleton" style="height: 35px; width: 40%;"></div></div>
+                <div class="stat-item"><div class="skeleton" style="height: 15px; width: 60%; margin-bottom: 10px;"></div><div class="skeleton" style="height: 35px; width: 40%;"></div></div>
+                <div class="stat-item"><div class="skeleton" style="height: 15px; width: 60%; margin-bottom: 10px;"></div><div class="skeleton" style="height: 35px; width: 40%;"></div></div>
+                <div class="stat-item"><div class="skeleton" style="height: 15px; width: 60%; margin-bottom: 10px;"></div><div class="skeleton" style="height: 35px; width: 40%;"></div></div>
             </div>
-            <div class="stat-item">
-                <h3 style="color: #ef4444;">₹<span id="spent">0</span></h3>
-                <p>Total Spent</p>
-            </div>
-            <div class="stat-item">
-                <h3 style="color: #10b981;">₹<span id="remaining">0</span></h3>
-                <p>Remaining Funds</p>
+            <div style="display: flex; justify-content: center; opacity: 0.5; margin-top: 2rem;">
+                <p class="text-muted">Enter an Event ID above to populate data.</p>
             </div>
         </div>
 
-        <!-- Main Content Grid -->
-        <div style="display: grid; grid-template-columns: 1fr; gap: 2rem;">
-
-            <!-- Alerts Section -->
-            <div class="card" id="alertsCard" style="display: none;">
-                <div class="card-title" style="color: #f59e0b;">⚠ Analysis & Alerts</div>
-                <div id="alerts"></div>
-            </div>
-
-            <!-- Expenses Table -->
-            <div class="card">
-                <div class="flex-row justify-between mb-4">
-                    <div class="card-title">Expense Report</div>
-                    <button onclick="toggleEventsList()" class="btn btn-outline" style="font-size: 0.875rem;">See All
-                        Events</button>
+        <!-- Populated Dashboard (hidden by default) -->
+        <div id="dashboardContent" class="hidden">
+            
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <p>Total Budget</p>
+                    <h3 class="text-primary">₹<span class="animated-counter" id="budget">0</span></h3>
                 </div>
-
-                <!-- Hidden Events List -->
-                <div id="eventsListContainer" class="hidden mb-4"
-                    style="background: #f9fafb; padding: 1rem; border-radius: 8px;">
-                    <ul id="eventsList" style="list-style: none; padding: 0;"></ul>
+                <div class="stat-item">
+                    <p>Total Spent</p>
+                    <h3 class="text-danger">₹<span class="animated-counter" id="spent">0</span></h3>
                 </div>
-
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Category</th>
-                                <th>Amount</th>
-                                <th>Receipt</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="expenseTable">
-                            <tr>
-                                <td colspan="4" class="text-center" style="color: var(--text-muted); padding: 2rem;">No
-                                    event loaded.
-                                    Enter an ID above.</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <div class="stat-item">
+                    <p>Remaining</p>
+                    <h3 class="text-success">₹<span class="animated-counter" id="remaining">0</span></h3>
+                </div>
+                <div class="stat-item">
+                    <p>% Consumed</p>
+                    <h3 style="color: var(--text-dark);"><span class="animated-counter" id="consumedPercent">0</span>%</h3>
+                    <div class="progress-container">
+                        <div class="progress-bar" id="budgetProgress"></div>
+                    </div>
                 </div>
             </div>
 
+            <!-- Main Split -->
+            <div style="display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 3fr); gap: 1.5rem; margin-top: 1.5rem;">
+                @media (max-width: 1024px) {
+                    div[style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
+                }
+
+                <!-- Left Column: Table & Filters -->
+                <div class="card" style="margin-bottom: 0;">
+                    <div class="flex-row justify-between mb-4">
+                        <div class="card-title" style="margin:0;">Expense Report</div>
+                        <button onclick="toggleEventsList()" class="btn btn-outline" style="padding: 0.5rem 1rem; font-size: 0.8rem;">Browse Directory</button>
+                    </div>
+
+                    <!-- Hidden Events List -->
+                    <div id="eventsListContainer" class="hidden mb-4" style="background: var(--bg-body); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                        <ul id="eventsList" style="list-style: none; margin: 0; padding: 0; max-height: 200px; overflow-y: auto;"></ul>
+                    </div>
+
+                    <!-- Data Controls -->
+                    <div class="filter-bar">
+                        <input type="text" id="searchInput" class="form-control" placeholder="Search categories..." onkeyup="renderExpensesTable()">
+                        <select id="sortSelect" class="form-control" style="max-width: 200px;" onchange="renderExpensesTable()">
+                            <option value="newest">Newest First</option>
+                            <option value="amount-desc">Amount (High to Low)</option>
+                            <option value="amount-asc">Amount (Low to High)</option>
+                            <option value="az">Category (A-Z)</option>
+                        </select>
+                    </div>
+
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Category</th>
+                                    <th>Amount</th>
+                                    <th>Receipt</th>
+                                    <th style="width: 80px; text-align: right;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="expenseTable">
+                                <!-- JS populated -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Right Column: Alerts & Chart -->
+                <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                    
+                    <!-- AI Fraud Alerts -->
+                    <div class="card" id="alertsCard" style="margin: 0; border-top: 4px solid var(--warning);">
+                        <div class="card-title" style="margin-bottom: 1rem;">
+                            <span style="background:var(--warning-light); color:var(--warning); padding:0.25rem 0.5rem; border-radius: 4px; font-size:1rem; margin-right:5px;">⚠</span>
+                            AI Analysis
+                        </div>
+                        <div id="alertsLoader" class="skeleton" style="height: 60px; width: 100%; display: none;"></div>
+                        <div id="alerts" style="display: flex; flex-direction: column; gap: 0.5rem;"></div>
+                    </div>
+
+                    <!-- Category Breakdown Donut -->
+                    <div class="card" style="margin: 0; flex-grow: 1;">
+                        <div class="card-title">Category Breakdown</div>
+                        <div class="chart-container">
+                            <div class="donut-chart" id="categoryChart">
+                                <div class="donut-hole"></div>
+                            </div>
+                            <div>
+                                <ul class="chart-legend" id="chartLegend">
+                                    <!-- JS populated -->
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
         </div>
     </div>
 
     <script>
-        // Use API_BASE_URL from config.js
+        // Core Utilities
         const BASE_URL = API_BASE_URL;
+        let globalExpenses = []; // Store currently dragged expenses for sorting/filtering
+        
+        // Dark Mode Logic
+        const themeToggle = document.getElementById('themeToggle');
+        const rootElement = document.documentElement;
+
+        function updateToggleIcon() {
+            const isDark = rootElement.getAttribute('data-theme') === 'dark';
+            themeToggle.innerHTML = isDark ? '☀️' : '🌙';
+        }
+        updateToggleIcon();
+
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = rootElement.getAttribute('data-theme');
+            let newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            rootElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateToggleIcon();
+            updateChartStyle(); // re-render charts to match theme changes
+        });
+
+        // Toast System
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            
+            let icon = '✅';
+            if(type === 'error') icon = '❌';
+            if(type === 'warning') icon = '⚠️';
+
+            toast.innerHTML = `<span>${icon}</span> <div>${message}</div>`;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.add('fade-out');
+                toast.addEventListener('animationend', () => toast.remove());
+            }, 3500);
+        }
+
+        // Animation Utilities
+        function animateValue(obj, start, end, duration) {
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                const current = Math.floor(progress * (end - start) + start);
+                obj.innerHTML = current.toLocaleString();
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                } else {
+                    // Final assure
+                    obj.innerHTML = end.toLocaleString();
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        // Color palettes for JS elements
+        const chartColors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#0ea5e9'];
 
         async function loadDashboard() {
-            const eventId = document.getElementById("eventId").value;
-            if (!eventId) return;
+            const eventId = document.getElementById("eventId").value.trim();
+            const btn = document.getElementById("loadBtn");
+            if (!eventId) {
+                showToast('Please enter an Event ID', 'error');
+                return;
+            }
+
+            // UI Loading State
+            btn.innerHTML = `<span style="display:inline-block; animation: spin 1s linear infinite;">⏳</span> Loading`;
+            btn.disabled = true;
 
             try {
-                // Event data
+                // Fetch Event Data
                 const eventRes = await fetch(`${BASE_URL}/events`);
                 const events = await eventRes.json();
                 const event = events.find(e => e._id === eventId);
 
                 if (!event) {
-                    alert("Invalid Event ID");
+                    showToast('Invalid Event ID or not found.', 'error');
+                    btn.innerHTML = "Load Panel";
+                    btn.disabled = false;
                     return;
                 }
 
-                document.getElementById("budget").innerText = event.totalBudget.toLocaleString();
+                // Expose UI Containers
+                document.getElementById('placeholderState').classList.add('hidden');
+                document.getElementById('dashboardContent').classList.remove('hidden');
 
-                // Expenses
+                // Animate Budget
+                animateValue(document.getElementById("budget"), 0, event.totalBudget, 1000);
+
+                // Fetch Expenses
                 const expRes = await fetch(`${BASE_URL}/expenses/${eventId}`);
-                const expenses = await expRes.json();
+                globalExpenses = await expRes.json();
+                
+                // For demonstration, reverse array to simulate "newest first" originally
+                globalExpenses.reverse();
 
                 let spent = 0;
-                const table = document.getElementById("expenseTable");
-                table.innerHTML = "";
+                globalExpenses.forEach(e => spent += e.amount);
 
-                if (expenses.length === 0) {
-                    table.innerHTML = `<tr><td colspan="4" class="text-center">No expenses recorded yet.</td></tr>`;
-                }
+                // Animate Spent and Remaining
+                animateValue(document.getElementById("spent"), 0, spent, 1000);
+                animateValue(document.getElementById("remaining"), 0, Math.max(0, event.totalBudget - spent), 1000);
 
-                expenses.forEach(e => {
-                    spent += e.amount;
-                    table.innerHTML += `
-          <tr>
-            <td style="font-weight: 500;">${e.category}</td>
-            <td>₹${e.amount.toLocaleString()}</td>
-            <td>${e.receiptUrl ? `<a href="${e.receiptUrl}" target="_blank" style="color: var(--primary); text-decoration: underline;">View Receipt</a>` : "<span style='color: #ef4444;'>Missing</span>"}</td>
-            <td><button onclick="deleteExpense('${e._id}')" style="color: #ef4444; background: none; border: none; font-weight: 600; cursor: pointer;">Delete</button></td>
-          </tr>
-        `;
-                });
+                // Progress Bar Math
+                const percent = (event.totalBudget > 0) ? Math.min(100, Math.round((spent / event.totalBudget) * 100)) : 0;
+                animateValue(document.getElementById("consumedPercent"), 0, percent, 1000);
+                
+                const pBar = document.getElementById("budgetProgress");
+                pBar.style.width = '0%';
+                setTimeout(() => { pBar.style.width = percent + '%'; }, 100);
 
-                document.getElementById("spent").innerText = spent.toLocaleString();
-                document.getElementById("remaining").innerText = (event.totalBudget - spent).toLocaleString();
+                if(percent < 60) pBar.style.backgroundColor = 'var(--success)';
+                else if(percent < 85) pBar.style.backgroundColor = 'var(--warning)';
+                else pBar.style.backgroundColor = 'var(--danger)';
 
-                // Fraud check
-                const alertBox = document.getElementById("alerts");
-                const alertCard = document.getElementById("alertsCard");
-                alertCard.style.display = "block";
-                alertBox.innerHTML = '<p style="color: var(--text-muted);">⏳ Analysing financial patterns...</p>';
+                // Render Table
+                renderExpensesTable();
 
+                // Trigger async fraud checks
+                runFraudCheck(eventId);
+
+            } catch (err) {
+                console.error(err);
+                showToast("Error loading dashboard data. Make sure backend is running.", "error");
+            } finally {
+                btn.innerHTML = "Load Panel";
+                btn.disabled = false;
+            }
+        }
+
+        function renderExpensesTable() {
+            const table = document.getElementById("expenseTable");
+            const search = document.getElementById("searchInput").value.toLowerCase();
+            const sortSelection = document.getElementById("sortSelect").value;
+
+            // Clone to avoid mutating original
+            let filteredArray = [...globalExpenses];
+
+            // 1. Filter
+            if (search) {
+                filteredArray = filteredArray.filter(e => e.category.toLowerCase().includes(search));
+            }
+
+            // 2. Sort
+            if (sortSelection === 'amount-desc') {
+                filteredArray.sort((a, b) => b.amount - a.amount);
+            } else if (sortSelection === 'amount-asc') {
+                filteredArray.sort((a, b) => a.amount - b.amount);
+            } else if (sortSelection === 'az') {
+                filteredArray.sort((a, b) => a.category.localeCompare(b.category));
+            }
+            // newest is default assuming array logic
+
+            table.innerHTML = "";
+
+            if (filteredArray.length === 0) {
+                table.innerHTML = `<tr><td colspan="4" class="text-center text-muted" style="padding: 2rem;">No matching expenses found.</td></tr>`;
+            }
+
+            filteredArray.forEach(e => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-weight: 500;">
+                       <span class="badge" style="background:var(--slate-100); color:var(--slate-700); border:1px solid var(--border-color);">${e.category}</span>
+                    </td>
+                    <td style="font-variant-numeric: tabular-nums;">₹${e.amount.toLocaleString()}</td>
+                    <td>${e.receiptUrl ? `<a href="${e.receiptUrl}" target="_blank" style="text-decoration: underline; font-size:0.9rem;">View ↗</a>` : "<span class='text-danger' style='font-size:0.9rem;'>Missing</span>"}</td>
+                    <td style="text-align: right;">
+                        <button onclick="deleteExpense('${e._id}')" class="text-danger" style="background: none; border: none; font-weight: 600; cursor: pointer; padding:0.25rem 0.5rem; border-radius:4px; transition:background 0.2s;">✕ Delete</button>
+                    </td>
+                `;
+                table.appendChild(tr);
+            });
+
+            // Re-render Donut Chart based on CURRENT filters or all global expenses? Usually visually better to show all
+            renderDonutChart(globalExpenses);
+        }
+
+        function renderDonutChart(expenseArray) {
+            const donutChart = document.getElementById("categoryChart");
+            const legend = document.getElementById("chartLegend");
+            
+            if (expenseArray.length === 0) {
+                donutChart.style.background = `conic-gradient(var(--slate-200) 0% 100%)`;
+                legend.innerHTML = '<li class="text-muted text-sm">No expenses logged.</li>';
+                return;
+            }
+
+            // Group amounts by category
+            const categorySums = {};
+            let grandTotal = 0;
+            expenseArray.forEach(e => {
+                categorySums[e.category] = (categorySums[e.category] || 0) + e.amount;
+                grandTotal += e.amount;
+            });
+
+            // Convert to array and sort largest first
+            const sortedKeys = Object.keys(categorySums).sort((a,b) => categorySums[b] - categorySums[a]);
+
+            let gradientStops = [];
+            let currentDegrees = 0;
+            legend.innerHTML = "";
+
+            sortedKeys.forEach((key, index) => {
+                const total = categorySums[key];
+                const percentage = total / grandTotal;
+                const degrees = percentage * 360;
+                
+                const color = chartColors[index % chartColors.length];
+
+                gradientStops.push(`${color} ${currentDegrees}deg ${currentDegrees + degrees}deg`);
+                currentDegrees += degrees;
+
+                // Append Legend Item
+                legend.innerHTML += `
+                    <li>
+                        <div class="legend-color" style="background-color: ${color}"></div>
+                        <span style="font-weight:500;">${key}</span> 
+                        <span class="text-muted" style="margin-left:auto;">${(percentage*100).toFixed(1)}%</span>
+                    </li>
+                `;
+            });
+
+            donutChart.style.background = `conic-gradient(${gradientStops.join(', ')})`;
+        }
+
+        // Used by dark mode toggle to repaint empty charts if needed, but not strictly necessary here.
+        function updateChartStyle() {
+            if(globalExpenses && globalExpenses.length === 0) renderDonutChart([]);
+        }
+
+        async function runFraudCheck(eventId) {
+            const alertBox = document.getElementById("alerts");
+            const alertLoader = document.getElementById("alertsLoader");
+            
+            alertBox.innerHTML = "";
+            alertLoader.style.display = "block";
+
+            try {
                 const fraudRes = await fetch(`${BASE_URL}/events/check/${eventId}`);
                 const fraud = await fraudRes.json();
 
-                alertBox.innerHTML = "";
+                alertLoader.style.display = "none";
 
                 if (fraud.alerts.length === 0) {
-                    alertBox.innerHTML = "<p style='color: #10b981; font-weight: 500;'>✔ No anomalies or misuse detected.</p>";
+                    alertBox.innerHTML = `
+                      <div style="display:flex; align-items:center; gap:0.5rem; padding: 1rem; border-radius: var(--radius-sm); border-left: 4px solid var(--success); background: var(--bg-card); border:1px solid var(--border-color);">
+                         <span style="font-size:1.2rem;">🛡️</span> 
+                         <span style="color:var(--text-dark); font-weight:500;">Coast is clear. No anomalies detected.</span>
+                      </div>`;
                 } else {
                     fraud.alerts.forEach(a => {
-                        alertBox.innerHTML += `<div style="padding: 10px; background: #fffbeb; border-left: 4px solid #f59e0b; margin-bottom: 5px; border-radius: 4px;">⚠ ${a}</div>`;
+                        const isSevere = a.includes('exceeded') || a.toLowerCase().includes('high');
+                        const borderColor = isSevere ? 'var(--danger)' : 'var(--warning)';
+                        const bgHint = isSevere ? 'var(--danger-light)' : 'var(--warning-light)';
+                        
+                        // We map them creatively for aesthetic
+                        alertBox.innerHTML += `
+                        <div style="padding: 1rem; border-radius: var(--radius-sm); border-left: 4px solid ${borderColor}; background: var(--bg-card); border: 1px solid var(--border-color); display:flex; align-items:center; box-shadow: var(--shadow-sm); gap: 0.75rem;">
+                            <div style="background: ${bgHint}; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem; font-weight:bold; color: ${borderColor};">${isSevere ? 'HIGH' : 'WARN'}</div>
+                            <span style="font-size:0.95rem; color:var(--text-dark);">${a}</span>
+                        </div>`;
                     });
                 }
-            } catch (err) {
-                console.error(err);
-                alert("Error loading dashboard data. Make sure backend is running.");
+            } catch(e) {
+                alertLoader.style.display = "none";
+                alertBox.innerHTML = `<p class="text-danger">Analysis failed to reach backend.</p>`;
             }
         }
 
         async function deleteExpense(id) {
-            if (!confirm("Are you sure you want to delete this expense?")) return;
-            await fetch(`${BASE_URL}/expenses/delete/${id}`, { method: "DELETE" });
-            loadDashboard();
+            // Very simple browser confirm until we implement modal globally if requested
+            if (!confirm("Delete this expense permanently?")) return;
+            try {
+                const res = await fetch(`${BASE_URL}/expenses/delete/${id}`, { method: "DELETE" });
+                if(res.ok) {
+                    showToast('Expense removed successfully');
+                    loadDashboard(); // reload entirely to sync budgets/check sums reliably
+                } else {
+                    showToast('Failed to delete expense', 'error');
+                }
+            } catch(err) {
+                showToast('API Error during deletion', 'error');
+            }
         }
 
         let eventsLoaded = false;
@@ -188,7 +500,7 @@
 
         async function loadAllEvents() {
             const list = document.getElementById("eventsList");
-            list.innerHTML = "Loading...";
+            list.innerHTML = `<li class="skeleton" style="height: 40px; margin-bottom:10px;"></li><li class="skeleton" style="height: 40px;"></li>`;
 
             try {
                 const res = await fetch(`${BASE_URL}/events`);
@@ -196,35 +508,37 @@
                 list.innerHTML = "";
 
                 if (events.length === 0) {
-                    list.innerHTML = "<li>No events found.</li>";
+                    list.innerHTML = "<li class='text-muted'>No active projects found.</li>";
                     return;
                 }
 
                 events.forEach(e => {
                     const li = document.createElement("li");
-                    li.style.padding = "8px";
-                    li.style.borderBottom = "1px solid #e5e7eb";
+                    li.style.padding = "0.75rem";
+                    li.style.borderBottom = "1px solid var(--border-color)";
                     li.style.display = "flex";
                     li.style.justifyContent = "space-between";
+                    li.style.alignItems = "center";
 
                     li.innerHTML = `
-            <span><strong>${e.name}</strong> <span style="font-family: monospace; background: #eee; padding: 2px 5px; rounded: 4px; font-size: 0.8rem;">${e._id}</span></span>
-            <button onclick="copyToClipboard('${e._id}')" style="background: none; border: none; color: var(--primary); cursor: pointer;">Copy ID</button>
-          `;
+                    <div style="display:flex; flex-direction:column;">
+                        <span style="font-weight:600; color:var(--text-dark);">${e.name}</span> 
+                        <span style="font-family: monospace; color: var(--text-muted); font-size: 0.8rem; margin-top:2px;">ID: ${e._id}</span>
+                    </div>
+                    <button onclick="copyToClipboard('${e._id}')" class="btn btn-outline" style="padding: 0.25rem 0.75rem; font-size:0.8rem;">Copy ID</button>
+                    `;
                     list.appendChild(li);
                 });
             } catch (err) {
-                list.innerHTML = `<li style="color:red;">Error loading events: ${err.message}</li>`;
+                list.innerHTML = `<li class="text-danger">Error fetching projects cache.</li>`;
             }
         }
 
         function copyToClipboard(text) {
             navigator.clipboard.writeText(text).then(() => {
-                alert("Event ID copied: " + text);
+                showToast("Copied to clipboard!");
             });
         }
     </script>
-
 </body>
-
 </html>
