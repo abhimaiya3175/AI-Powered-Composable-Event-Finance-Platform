@@ -29,7 +29,26 @@ app.get("/", (req, res) => {
   res.send("Event Finance Manager backend running");
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+const REQUESTED_PORT = Number(process.env.PORT) || 5000;
+const FALLBACK_ATTEMPTS = process.env.NODE_ENV === "production" ? 1 : 6;
+
+function startServer(port, remainingAttempts) {
+  const server = app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+  });
+
+  server.on("error", (error) => {
+    const canRetry = error.code === "EADDRINUSE" && remainingAttempts > 1;
+
+    if (canRetry) {
+      console.warn(`Port ${port} is busy. Retrying on ${port + 1}...`);
+      startServer(port + 1, remainingAttempts - 1);
+      return;
+    }
+
+    console.error("Failed to start server:", error.message);
+    process.exit(1);
+  });
+}
+
+startServer(REQUESTED_PORT, FALLBACK_ATTEMPTS);

@@ -14,34 +14,47 @@
     <link rel="stylesheet" href="style.css">
     <script src="config.js"></script>
     <style>
+        .landing-shell {
+            min-height: calc(100vh - 74px);
+            display: grid;
+            gap: 2.5rem;
+            align-content: start;
+        }
+
+        .hero-center {
+            max-width: 100%;
+            margin: 0 auto;
+            text-align: center;
+        }
+
         .role-card-wrapper {
             position: relative;
-            transform-style: preserve-3d;
-            perspective: 1000px;
+            height: 100%;
+            display: grid;
         }
 
         .role-card {
             background: var(--bg-glass);
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
-            padding: 3rem;
+            padding: 2rem;
             border-radius: var(--radius-xl);
-            box-shadow: var(--shadow-md);
-            text-align: center;
+            box-shadow: var(--shadow-sm);
+            text-align: left;
             text-decoration: none;
             color: inherit;
             transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
             border: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            display: grid;
+            grid-template-rows: auto auto 1fr auto;
+            gap: 0.8rem;
             height: 100%;
             position: relative;
             z-index: 1;
         }
 
         .role-card:hover {
-            transform: translateY(-8px) scale(1.02);
+            transform: translateY(-6px);
             box-shadow: var(--shadow-lg);
             border-color: var(--primary-color);
         }
@@ -54,8 +67,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2.5rem;
-            margin-bottom: 1.5rem;
+            font-size: 2.1rem;
+            margin-bottom: 0.8rem;
             transition: transform 0.3s ease;
         }
         
@@ -68,15 +81,16 @@
         }
 
         .role-title {
-            font-size: 1.5rem;
+            font-family: var(--font-heading);
+            font-size: 1.35rem;
             font-weight: 800;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0;
             color: var(--text-dark);
         }
 
         .role-desc {
             color: var(--text-muted);
-            margin-bottom: 2rem;
+            margin-bottom: 1rem;
             line-height: 1.6;
         }
 
@@ -96,23 +110,40 @@
             z-index: 2;
         }
 
+        .hero-role-grid {
+            display: grid;
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+            gap: 1rem;
+            max-width: 980px;
+            margin: 2.4rem auto 0;
+            width: 100%;
+        }
+
+        .hero-role-grid .role-card-wrapper:nth-child(1) {
+            grid-column: span 7;
+        }
+
+        .hero-role-grid .role-card-wrapper:nth-child(2) {
+            grid-column: span 5;
+        }
+
         /* Features Section */
         .features-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 2rem;
-            margin-top: 5rem;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 1rem;
         }
         .feature-item {
-            text-align: center;
-            padding: 2rem;
+            text-align: left;
+            padding: 1.5rem;
             border-radius: var(--radius-lg);
             background: var(--bg-card);
             border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
         }
         .feature-icon {
-            font-size: 2rem;
-            margin-bottom: 1rem;
+            font-size: 1.5rem;
+            margin-bottom: 0.75rem;
         }
         
         .fade-in-element {
@@ -123,6 +154,21 @@
         .fade-in-element.visible {
             opacity: 1;
             transform: translateY(0);
+        }
+
+        @media (max-width: 960px) {
+            .hero-role-grid .role-card-wrapper:nth-child(1),
+            .hero-role-grid .role-card-wrapper:nth-child(2) {
+                grid-column: span 12;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .role-card {
+                text-align: center;
+            }
         }
     </style>
 </head>
@@ -143,18 +189,18 @@
         </div>
     </nav>
 
-    <div class="container" style="min-height: 90vh;">
+    <div class="container landing-shell">
 
         <!-- Hero -->
         <div class="hero-section">
             <div class="hero-mesh"></div>
-            <div class="hero-content" style="max-width: 100%; text-align: center; margin: 0 auto;">
+            <div class="hero-content hero-center">
                 <h1 class="hero-title fade-in-element">Finance Control for <span>Every Event</span></h1>
-                <p class="hero-subtitle fade-in-element" style="transition-delay: 100ms; max-width: 600px; margin-left: auto; margin-right: auto;">
+                <p class="hero-subtitle fade-in-element" style="transition-delay: 100ms; max-width: 700px; margin-left: auto; margin-right: auto;">
                     Seamlessly manage budgets, track operational expenses, and detect anomalies with our AI-powered finance platform.
                 </p>
                 
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; max-width: 900px; margin: 3rem auto 0 auto; width: 100%;" class="fade-in-element" style="transition-delay: 200ms;">
+                <div class="hero-role-grid fade-in-element" style="transition-delay: 200ms;">
                     <!-- Card 1 -->
                     <div class="role-card-wrapper">
                         <div class="badge-popular">Popular</div>
@@ -162,7 +208,7 @@
                             <div class="icon-circle">📊</div>
                             <div class="role-title">Event Admin</div>
                             <div class="role-desc">Monitor project budgets, visualize expenses, track analytics, and review AI fraud alerts.</div>
-                            <span class="btn btn-primary" style="width: 100%;">Go to Dashboard</span>
+                            <span class="btn btn-primary w-full">Go to Dashboard</span>
                         </a>
                     </div>
         
@@ -172,28 +218,28 @@
                             <div class="icon-circle">🛠️</div>
                             <div class="role-title">Finance Managers</div>
                             <div class="role-desc">Execute event operations, log daily expenses safely, and upload receipts in real-time.</div>
-                            <span class="btn btn-outline" style="width: 100%;">Manage Operations</span>
+                            <span class="btn btn-outline w-full">Manage Operations</span>
                         </a>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Extra Marketing Fluff to make it look like a SaaS landing page -->
+        <!-- Product Capabilities -->
         <div class="features-grid fade-in-element">
             <div class="feature-item">
                 <div class="feature-icon">⚡</div>
-                <h3 style="margin-bottom: 0.5rem;">Track Instantly</h3>
+                <h3 style="margin-bottom: 0.4rem;">Track Instantly</h3>
                 <p class="text-muted">Log expenses directly from the floor and see them mapped to your budgets instantly.</p>
             </div>
             <div class="feature-item">
                 <div class="feature-icon">🤖</div>
-                <h3 style="margin-bottom: 0.5rem;">AI Detection</h3>
+                <h3 style="margin-bottom: 0.4rem;">AI Detection</h3>
                 <p class="text-muted">We use advanced pattern matching to detect anomalous spending right when it happens.</p>
             </div>
             <div class="feature-item">
                 <div class="feature-icon">📈</div>
-                <h3 style="margin-bottom: 0.5rem;">Clear Reporting</h3>
+                <h3 style="margin-bottom: 0.4rem;">Clear Reporting</h3>
                 <p class="text-muted">A clear, modern dashboard to prove exactly where funds are being allocated seamlessly.</p>
             </div>
         </div>

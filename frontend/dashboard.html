@@ -14,19 +14,56 @@
     <link rel="stylesheet" href="style.css">
     <script src="config.js"></script>
     <style>
+        .dashboard-shell {
+            display: grid;
+            gap: 1.2rem;
+        }
+
         .dashboard-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
+            display: grid;
+            grid-template-columns: repeat(12, minmax(0, 1fr));
             gap: 1rem;
         }
-        @media (max-width: 640px) {
-            .dashboard-header { flex-direction: column; align-items: flex-start; }
-            .event-selector { width: 100%; }
-            .event-selector input { flex-grow: 1; }
+
+        .dashboard-title-block {
+            grid-column: span 8;
         }
+
+        .event-selector {
+            grid-column: span 4;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .dashboard-ribbon {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 0.6rem;
+        }
+
+        .ribbon-item {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            background: var(--bg-card);
+            box-shadow: var(--shadow-sm);
+            padding: 0.7rem 0.8rem;
+        }
+
+        .ribbon-item strong {
+            display: block;
+            font-family: var(--font-heading);
+            font-size: 0.83rem;
+            margin-bottom: 0.1rem;
+            color: var(--text-dark);
+        }
+
+        .ribbon-item span {
+            color: var(--text-muted);
+            font-size: 0.78rem;
+        }
+
         .filter-bar {
             display: flex;
             gap: 1rem;
@@ -35,6 +72,33 @@
         }
         .filter-bar input {
             max-width: 250px;
+        }
+        .dashboard-main-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 8fr) minmax(0, 4fr);
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 980px) {
+            .dashboard-title-block,
+            .event-selector {
+                grid-column: span 12;
+            }
+
+            .dashboard-ribbon {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .dashboard-main-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 640px) {
+            .dashboard-ribbon {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -56,9 +120,9 @@
         </div>
     </nav>
 
-    <div class="container">
+    <div class="container dashboard-shell">
         <div class="dashboard-header">
-            <div>
+            <div class="dashboard-title-block">
                 <h1 style="font-weight: 800; font-size: 2rem; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
                     Admin Dashboard
                 </h1>
@@ -66,9 +130,29 @@
             </div>
 
             <!-- Event Selector -->
-            <div class="event-selector" style="display: flex; gap: 0.5rem; align-items: center;">
-                <input id="eventId" class="form-control" placeholder="Paste Event ID" style="width: 250px;">
+            <div class="event-selector">
+                <input id="eventId" class="form-control" placeholder="Paste Event ID" list="eventSuggestions">
+                <datalist id="eventSuggestions"></datalist>
                 <button onclick="loadDashboard()" class="btn btn-primary" id="loadBtn">Load Panel</button>
+            </div>
+        </div>
+
+        <div class="dashboard-ribbon" aria-label="dashboard context">
+            <div class="ribbon-item">
+                <strong>Grid View</strong>
+                <span>12-column responsive board</span>
+            </div>
+            <div class="ribbon-item">
+                <strong>Portfolio Data</strong>
+                <span>Live event and expense sync</span>
+            </div>
+            <div class="ribbon-item">
+                <strong>AI Signals</strong>
+                <span>Fraud and anomaly checks</span>
+            </div>
+            <div class="ribbon-item">
+                <strong>Operator Controls</strong>
+                <span>Search, sort, delete, review</span>
             </div>
         </div>
 
@@ -112,10 +196,7 @@
             </div>
 
             <!-- Main Split -->
-            <div style="display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 3fr); gap: 1.5rem; margin-top: 1.5rem;">
-                @media (max-width: 1024px) {
-                    div[style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
-                }
+            <div class="dashboard-main-grid">
 
                 <!-- Left Column: Table & Filters -->
                 <div class="card" style="margin-bottom: 0;">
@@ -193,8 +274,8 @@
 
     <script>
         // Core Utilities
-        const BASE_URL = API_BASE_URL;
         let globalExpenses = []; // Store currently dragged expenses for sorting/filtering
+        const eventInput = document.getElementById("eventId");
         
         // Dark Mode Logic
         const themeToggle = document.getElementById('themeToggle');
@@ -255,8 +336,20 @@
         // Color palettes for JS elements
         const chartColors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#0ea5e9'];
 
+        function populateEventSuggestions(events) {
+            const eventSuggestions = document.getElementById("eventSuggestions");
+            eventSuggestions.innerHTML = "";
+
+            events.forEach((event) => {
+                const option = document.createElement("option");
+                option.value = event._id;
+                option.label = `${event.name} (₹${event.totalBudget.toLocaleString()})`;
+                eventSuggestions.appendChild(option);
+            });
+        }
+
         async function loadDashboard() {
-            const eventId = document.getElementById("eventId").value.trim();
+            const eventId = eventInput.value.trim();
             const btn = document.getElementById("loadBtn");
             if (!eventId) {
                 showToast('Please enter an Event ID', 'error');
@@ -269,9 +362,12 @@
 
             try {
                 // Fetch Event Data
-                const eventRes = await fetch(`${BASE_URL}/events`);
+                const eventRes = await apiFetch("/events");
                 const events = await eventRes.json();
-                const event = events.find(e => e._id === eventId);
+                populateEventSuggestions(events);
+
+                const normalizedQuery = eventId.toLowerCase();
+                const event = events.find(e => e._id === eventId || e.name.toLowerCase() === normalizedQuery);
 
                 if (!event) {
                     showToast('Invalid Event ID or not found.', 'error');
@@ -279,6 +375,9 @@
                     btn.disabled = false;
                     return;
                 }
+
+                // Keep input synchronized with actual selected event id.
+                eventInput.value = event._id;
 
                 // Expose UI Containers
                 document.getElementById('placeholderState').classList.add('hidden');
@@ -288,7 +387,7 @@
                 animateValue(document.getElementById("budget"), 0, event.totalBudget, 1000);
 
                 // Fetch Expenses
-                const expRes = await fetch(`${BASE_URL}/expenses/${eventId}`);
+                const expRes = await apiFetch(`/expenses/${eventId}`);
                 globalExpenses = await expRes.json();
                 
                 // For demonstration, reverse array to simulate "newest first" originally
@@ -437,7 +536,7 @@
             alertLoader.style.display = "block";
 
             try {
-                const fraudRes = await fetch(`${BASE_URL}/events/check/${eventId}`);
+                const fraudRes = await apiFetch(`/events/check/${eventId}`);
                 const fraud = await fraudRes.json();
 
                 alertLoader.style.display = "none";
@@ -472,7 +571,7 @@
             // Very simple browser confirm until we implement modal globally if requested
             if (!confirm("Delete this expense permanently?")) return;
             try {
-                const res = await fetch(`${BASE_URL}/expenses/delete/${id}`, { method: "DELETE" });
+                const res = await apiFetch(`/expenses/delete/${id}`, { method: "DELETE" });
                 if(res.ok) {
                     showToast('Expense removed successfully');
                     loadDashboard(); // reload entirely to sync budgets/check sums reliably
@@ -503,7 +602,7 @@
             list.innerHTML = `<li class="skeleton" style="height: 40px; margin-bottom:10px;"></li><li class="skeleton" style="height: 40px;"></li>`;
 
             try {
-                const res = await fetch(`${BASE_URL}/events`);
+                const res = await apiFetch("/events");
                 const events = await res.json();
                 list.innerHTML = "";
 
@@ -539,6 +638,30 @@
                 showToast("Copied to clipboard!");
             });
         }
+
+        async function bootstrapDashboard() {
+            try {
+                const eventRes = await apiFetch("/events");
+                const events = await eventRes.json();
+                populateEventSuggestions(events);
+
+                if (events.length === 0 || eventInput.value.trim()) return;
+
+                const newestEvent = [...events].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+                eventInput.value = newestEvent._id;
+                await loadDashboard();
+            } catch (error) {
+                // Keep the initial skeleton state when backend is temporarily unavailable.
+            }
+        }
+
+        eventInput.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+                loadDashboard();
+            }
+        });
+
+        bootstrapDashboard();
     </script>
 </body>
 </html>

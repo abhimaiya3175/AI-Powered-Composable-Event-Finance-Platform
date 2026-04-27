@@ -63,6 +63,14 @@ Event Finance Manager/
 ## 🔧 Local Development
 
 ```bash
+# Create .env in the project root (same level as README.md)
+# Required keys:
+# MONGO_URI=your_mongodb_connection_string
+# CLOUDINARY_CLOUD_NAME=your_cloud_name
+# CLOUDINARY_API_KEY=your_api_key
+# CLOUDINARY_API_SECRET=your_api_secret
+# PORT=5000
+
 # Backend
 cd backend
 npm install
@@ -75,12 +83,16 @@ npm start
 
 ## 🔐 Environment Variables
 
-Required for backend (set in Render dashboard):
+Required for backend (local and Render):
 - `MONGO_URI` - MongoDB connection string
 - `CLOUDINARY_CLOUD_NAME`
 - `CLOUDINARY_API_KEY`
 - `CLOUDINARY_API_SECRET`
-- `FRONTEND_URL` (optional) - Netlify URL for CORS
+- `PORT` (optional) - Defaults to `5000` if not set
+
+Security note:
+- Keep secrets only in `.env` and cloud provider environment settings.
+- `.env` is ignored by git; do not commit real credentials.
 
 ## 📝 License
 

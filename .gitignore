@@ -2,12 +2,10 @@
 node_modules/
 .npm/
 
-# Environment variables
+# Environment variables and secrets
 .env
-.env.local
-.env.development
-.env.test
-.env.production
+.env.*
+!.env.example
 
 # OCR trained data
 *.traineddata

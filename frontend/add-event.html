@@ -14,14 +14,90 @@
     <link rel="stylesheet" href="style.css">
     <script src="config.js"></script>
     <style>
+        .operations-shell {
+            display: grid;
+            gap: 1.25rem;
+        }
+
+        /* Full-width horizontal chip bar — sits below the title */
+        .operations-summary-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.94rem;   /* 0.75 × 1.25 */
+            width: 100%;
+        }
+
+        .summary-chip {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            background: var(--bg-card);
+            padding: 0.94rem 1.25rem;  /* 0.75×1.25 / 1×1.25 */
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            align-items: center;
+            gap: 0.81rem;   /* 0.65 × 1.25 */
+            transition: box-shadow 0.2s ease, transform 0.2s ease;
+        }
+
+        .summary-chip:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-1px);
+        }
+
+        .summary-chip-icon {
+            font-size: 1.56rem;  /* 1.25 × 1.25 */
+            flex-shrink: 0;
+        }
+
+        .summary-chip-body strong {
+            display: block;
+            color: var(--text-dark);
+            font-family: var(--font-heading);
+            font-size: 1.05rem;  /* 0.84 × 1.25 */
+            margin-bottom: 0.19rem;
+        }
+
+        .summary-chip-body span {
+            color: var(--text-muted);
+            font-size: 0.95rem;  /* 0.76 × 1.25 */
+            line-height: 1.3;
+        }
+
+        .operations-title {
+            padding-top: 0;
+        }
+
         .page-split {
             display: grid;
-            grid-template-columns: minmax(0, 5fr) minmax(0, 5fr);
-            gap: 2rem;
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+            gap: 1.2rem;
             align-items: start;
         }
-        @media (max-width: 900px) {
-            .page-split { grid-template-columns: 1fr; }
+
+        .operations-column-left {
+            grid-column: span 7;
+            display: grid;
+            gap: 1.2rem;
+        }
+
+        .operations-column-right {
+            grid-column: span 5;
+        }
+
+        @media (max-width: 980px) {
+            .operations-summary-bar {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .operations-column-left,
+            .operations-column-right {
+                grid-column: span 12;
+            }
+        }
+
+        @media (max-width: 560px) {
+            .operations-summary-bar {
+                grid-template-columns: 1fr 1fr;
+            }
         }
 
         #imagePreview {
@@ -95,17 +171,50 @@
         </div>
     </nav>
 
-    <div class="container">
+    <div class="container operations-shell">
         
-        <div style="margin-bottom: 3rem;">
-            <h1 style="font-size: 2.5rem; font-weight: 800; color: var(--text-dark); margin-bottom: 0.5rem;">Operations Manager</h1>
-            <p class="text-muted" style="font-size: 1.1rem; max-width: 600px;">Allocate budgets, initialize new events, and systematically log physical and digital receipts directly into the database.</p>
+        <!-- Page title -->
+        <div class="operations-title">
+            <h1 style="font-family: var(--font-heading); font-size: clamp(1.8rem, 4vw, 2.7rem); line-height: 1.05; margin-bottom: 0.45rem;">Operations Manager</h1>
+            <p class="text-muted" style="font-size: 1rem; max-width: 650px;">Allocate budgets, initialize new events, and submit digital proofs in one grid-driven operations board.</p>
+        </div>
+
+        <!-- Horizontal feature bar — below the title -->
+        <div class="operations-summary-bar" aria-label="Page feature summary">
+            <div class="summary-chip">
+                <span class="summary-chip-icon">🚀</span>
+                <div class="summary-chip-body">
+                    <strong>Portfolio Setup</strong>
+                    <span>Budget + naming workflow</span>
+                </div>
+            </div>
+            <div class="summary-chip">
+                <span class="summary-chip-icon">🎫</span>
+                <div class="summary-chip-body">
+                    <strong>Ticket Intake</strong>
+                    <span>Receipts with categories</span>
+                </div>
+            </div>
+            <div class="summary-chip">
+                <span class="summary-chip-icon">⚡</span>
+                <div class="summary-chip-body">
+                    <strong>Live Sync</strong>
+                    <span>Connected to event API</span>
+                </div>
+            </div>
+            <div class="summary-chip">
+                <span class="summary-chip-icon">⊞</span>
+                <div class="summary-chip-body">
+                    <strong>Design Grid</strong>
+                    <span>Responsive 12-column layout</span>
+                </div>
+            </div>
         </div>
 
         <div class="page-split">
 
             <!-- LEFT COLUMN: CREATE & BROWSE -->
-            <div style="display:flex; flex-direction:column; gap:2rem;">
+            <div class="operations-column-left">
                 
                 <!-- Create Form -->
                 <div class="card" style="margin: 0; position:relative; overflow:hidden;">
@@ -144,7 +253,7 @@
             </div>
 
             <!-- RIGHT COLUMN: EXPENSE SUBMISSION -->
-            <div>
+            <div class="operations-column-right">
                 <div class="card" style="margin: 0; border-top: 4px solid var(--primary-color); height: 100%;">
                     <div class="card-title">💸 Submit Expense Ticket</div>
                     
@@ -198,7 +307,6 @@
 
     <!-- UI Scripts -->
     <script>
-        const BASE_URL = API_BASE_URL;
         
         /* -- Global UI Utilities -- */
         const themeToggle = document.getElementById('themeToggle');
@@ -247,7 +355,7 @@
             const originalText = document.getElementById('confirmDeleteBtn').innerText;
             document.getElementById('confirmDeleteBtn').innerText = "Deleting...";
             try {
-                const res = await fetch(`${BASE_URL}/events/delete/${eventToDelete}`, { method: "DELETE" });
+                const res = await apiFetch(`/events/delete/${eventToDelete}`, { method: "DELETE" });
                 if(res.ok) {
                     showToast('Portfolio terminated successfully');
                     document.getElementById('expenseEventId').value = ""; // clear selection if active
@@ -327,7 +435,7 @@
             btn.innerHTML = `<span style="display:inline-block; animation: spin 1s linear infinite;">⏳</span> Initializing...`;
 
             try {
-                const res = await fetch(`${BASE_URL}/events/create`, {
+                const res = await apiFetch("/events/create", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ name, totalBudget: Number(budgetStr) })
@@ -359,7 +467,7 @@
             list.innerHTML = `<div class="skeleton" style="height: 60px; margin-bottom:10px;"></div><div class="skeleton" style="height: 60px; margin-bottom:10px;"></div><div class="skeleton" style="height: 60px;"></div>`;
             
             try {
-                const res = await fetch(`${BASE_URL}/events`);
+                const res = await apiFetch("/events");
                 const events = await res.json();
                 list.innerHTML = "";
 
@@ -459,7 +567,7 @@
             if(receipt) formData.append("receipt", receipt);
 
             try {
-                const res = await fetch(`${BASE_URL}/expenses/add`, {
+                const res = await apiFetch("/expenses/add", {
                     method: "POST",
                     body: formData
                 });
