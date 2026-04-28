@@ -3,288 +3,209 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EventFi - Finance Control for Every Event</title>
-    <!-- Prevent FOUC for dark mode -->
-    <script>
-        const storedTheme = localStorage.getItem('theme');
-        if (storedTheme === 'dark' || (!storedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.setAttribute('data-theme', 'dark');
-        }
-    </script>
+    <title>EventFi - Smart Event Finance Management</title>
     <link rel="stylesheet" href="style.css">
-    <script src="config.js"></script>
-    <style>
-        .landing-shell {
-            min-height: calc(100vh - 74px);
-            display: grid;
-            gap: 2.5rem;
-            align-content: start;
-        }
-
-        .hero-center {
-            max-width: 100%;
-            margin: 0 auto;
-            text-align: center;
-        }
-
-        .role-card-wrapper {
-            position: relative;
-            height: 100%;
-            display: grid;
-        }
-
-        .role-card {
-            background: var(--bg-glass);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            padding: 2rem;
-            border-radius: var(--radius-xl);
-            box-shadow: var(--shadow-sm);
-            text-align: left;
-            text-decoration: none;
-            color: inherit;
-            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
-            border: 1px solid var(--border-color);
-            display: grid;
-            grid-template-rows: auto auto 1fr auto;
-            gap: 0.8rem;
-            height: 100%;
-            position: relative;
-            z-index: 1;
-        }
-
-        .role-card:hover {
-            transform: translateY(-6px);
-            box-shadow: var(--shadow-lg);
-            border-color: var(--primary-color);
-        }
-
-        .icon-circle {
-            width: 80px;
-            height: 80px;
-            background: var(--primary-light);
-            border-radius: var(--radius-full);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2.1rem;
-            margin-bottom: 0.8rem;
-            transition: transform 0.3s ease;
-        }
-        
-        html[data-theme="dark"] .icon-circle {
-            background: rgba(99, 102, 241, 0.2);
-        }
-
-        .role-card:hover .icon-circle {
-            transform: scale(1.1) rotate(5deg);
-        }
-
-        .role-title {
-            font-family: var(--font-heading);
-            font-size: 1.35rem;
-            font-weight: 800;
-            margin-bottom: 0;
-            color: var(--text-dark);
-        }
-
-        .role-desc {
-            color: var(--text-muted);
-            margin-bottom: 1rem;
-            line-height: 1.6;
-        }
-
-        .badge-popular {
-            position: absolute;
-            top: -12px;
-            right: 20px;
-            background: var(--primary-gradient);
-            color: white;
-            padding: 4px 12px;
-            border-radius: var(--radius-full);
-            font-size: 0.75rem;
-            font-weight: 700;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            box-shadow: var(--shadow-md);
-            z-index: 2;
-        }
-
-        .hero-role-grid {
-            display: grid;
-            grid-template-columns: repeat(12, minmax(0, 1fr));
-            gap: 1rem;
-            max-width: 980px;
-            margin: 2.4rem auto 0;
-            width: 100%;
-        }
-
-        .hero-role-grid .role-card-wrapper:nth-child(1) {
-            grid-column: span 7;
-        }
-
-        .hero-role-grid .role-card-wrapper:nth-child(2) {
-            grid-column: span 5;
-        }
-
-        /* Features Section */
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 1rem;
-        }
-        .feature-item {
-            text-align: left;
-            padding: 1.5rem;
-            border-radius: var(--radius-lg);
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            box-shadow: var(--shadow-sm);
-        }
-        .feature-icon {
-            font-size: 1.5rem;
-            margin-bottom: 0.75rem;
-        }
-        
-        .fade-in-element {
-            opacity: 0;
-            transform: translateY(20px);
-            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
-        }
-        .fade-in-element.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        @media (max-width: 960px) {
-            .hero-role-grid .role-card-wrapper:nth-child(1),
-            .hero-role-grid .role-card-wrapper:nth-child(2) {
-                grid-column: span 12;
-            }
-
-            .features-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .role-card {
-                text-align: center;
-            }
-        }
-    </style>
 </head>
-<body>
-
-    <!-- Toast Container -->
+<body class="page-transition">
     <div id="toast-container"></div>
 
-    <!-- Navbar -->
     <nav class="navbar">
-        <div class="brand-logo">
-            <span>🔷</span> EventFi
-        </div>
-        <div class="nav-links">
-            <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
-                🌙
-            </button>
+        <div class="navbar-inner">
+            <a href="index.html" class="brand-logo"><span>EF</span> Event Finance AI</a>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link active">Home</a>
+                <a href="#features" class="nav-link">Features</a>
+                <a href="#workflow" class="nav-link">How It Works</a>
+                <a href="roles.html" class="btn btn-primary">Get Started</a>
+            </div>
         </div>
     </nav>
 
-    <div class="container landing-shell">
-
-        <!-- Hero -->
-        <div class="hero-section">
-            <div class="hero-mesh"></div>
-            <div class="hero-content hero-center">
-                <h1 class="hero-title fade-in-element">Finance Control for <span>Every Event</span></h1>
-                <p class="hero-subtitle fade-in-element" style="transition-delay: 100ms; max-width: 700px; margin-left: auto; margin-right: auto;">
-                    Seamlessly manage budgets, track operational expenses, and detect anomalies with our AI-powered finance platform.
-                </p>
-                
-                <div class="hero-role-grid fade-in-element" style="transition-delay: 200ms;">
-                    <!-- Card 1 -->
-                    <div class="role-card-wrapper">
-                        <div class="badge-popular">Popular</div>
-                        <a href="dashboard.html" class="role-card">
-                            <div class="icon-circle">📊</div>
-                            <div class="role-title">Event Admin</div>
-                            <div class="role-desc">Monitor project budgets, visualize expenses, track analytics, and review AI fraud alerts.</div>
-                            <span class="btn btn-primary w-full">Go to Dashboard</span>
-                        </a>
+    <main class="page-shell">
+        <section class="hero">
+            <div class="hero-card">
+                <div class="hero-copy">
+                    <div class="eyebrow">AI-powered controls for every spend</div>
+                    <h1>Smart Event Finance <span class="accent">Management</span></h1>
+                    <p>
+                        Run event finance operations with live budget visibility, AI-backed fraud detection,
+                        receipt intelligence, and role-based workspaces built for Event Admins and Finance Managers.
+                    </p>
+                    <div class="cta-row">
+                        <a href="roles.html" class="btn btn-primary">Get Started</a>
+                        <a href="#workflow" class="btn btn-outline">View Demo</a>
                     </div>
-        
-                    <!-- Card 2 -->
-                    <div class="role-card-wrapper">
-                        <a href="add-event.html" class="role-card">
-                            <div class="icon-circle">🛠️</div>
-                            <div class="role-title">Finance Managers</div>
-                            <div class="role-desc">Execute event operations, log daily expenses safely, and upload receipts in real-time.</div>
-                            <span class="btn btn-outline w-full">Manage Operations</span>
-                        </a>
+                    <div class="hero-stats">
+                        <div class="stat-tile">
+                            <strong data-target="98" data-suffix="%">0</strong>
+                            <span class="text-muted">expense verification coverage</span>
+                        </div>
+                        <div class="stat-tile">
+                            <strong>24/7</strong>
+                            <span class="text-muted">AI anomaly monitoring</span>
+                        </div>
+                        <div class="stat-tile">
+                            <strong data-target="3" data-suffix="x">0</strong>
+                            <span class="text-muted">faster event closeout</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="hero-visual">
+                    <div class="dashboard-preview">
+                        <div class="preview-top">
+                            <div class="preview-chip"></div>
+                            <div class="preview-chip"></div>
+                            <div class="preview-chip"></div>
+                        </div>
+                        <div class="preview-bottom">
+                            <div class="preview-panel">
+                                <div class="text-muted" style="margin-bottom: 12px;">Budget Overview</div>
+                                <div class="preview-bars">
+                                    <span></span><span></span><span></span><span></span><span></span>
+                                </div>
+                            </div>
+                            <div class="preview-panel">
+                                <div class="text-muted" style="margin-bottom: 12px;">Category Split</div>
+                                <div class="preview-donut"></div>
+                            </div>
+                        </div>
+                        <div class="preview-bottom" style="margin-top: 0.75rem;">
+                            <div class="preview-panel">
+                                <div class="text-muted" style="margin-bottom: 12px;">Live Verification</div>
+                                <div class="flags-wrap">
+                                    <span class="badge badge-danger">ml anomaly</span>
+                                    <span class="badge badge-warning">ocr mismatch</span>
+                                    <span class="badge badge-success">verified</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
+        </section>
+
+        <section class="section" id="features">
+            <div class="section-card">
+                <div class="section-head">
+                    <div>
+                        <p class="text-muted">Core platform</p>
+                        <h2 class="section-title">Purpose-built for <span class="accent">modern finance ops</span></h2>
+                    </div>
+                </div>
+                <div class="feature-grid">
+                    <article class="feature-card">
+                        <div class="feature-icon">💸</div>
+                        <h3>Budget Tracking</h3>
+                        <p class="text-muted">Monitor total budget, amount spent, remaining budget, and burn rate with real-time KPI cards.</p>
+                    </article>
+                    <article class="feature-card">
+                        <div class="feature-icon">🛡️</div>
+                        <h3>Fraud Detection</h3>
+                        <p class="text-muted">Rule-based flags, ML anomaly signals, and OCR mismatch checks surface suspicious transactions early.</p>
+                    </article>
+                    <article class="feature-card">
+                        <div class="feature-icon">✨</div>
+                        <h3>AI Insights</h3>
+                        <p class="text-muted">Visual dashboards and verification badges make it easy to review expense health at a glance.</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="workflow">
+            <div class="section-card">
+                <div class="section-head">
+                    <div>
+                        <p class="text-muted">How it works</p>
+                        <h2 class="section-title">Simple 3-step finance flow</h2>
+                    </div>
+                </div>
+                <div class="steps-grid">
+                    <article class="step-card">
+                        <div class="step-number">01</div>
+                        <h3>Create or select an event</h3>
+                        <p class="text-muted">Finance Managers initialize event portfolios with budget caps and operating context.</p>
+                    </article>
+                    <article class="step-card">
+                        <div class="step-number">02</div>
+                        <h3>Submit expenses with receipts</h3>
+                        <p class="text-muted">Upload proofs, classify categories, and track submission progress with instant feedback.</p>
+                    </article>
+                    <article class="step-card">
+                        <div class="step-number">03</div>
+                        <h3>Review insights and alerts</h3>
+                        <p class="text-muted">Event Admins load dashboards, explore charts, and act on flagged transactions quickly.</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="testimonials-grid">
+                <div class="section-card">
+                    <p class="text-muted">What teams say</p>
+                    <h2 class="section-title">Trusted by operations and finance teams</h2>
+                    <div class="quote-card" style="margin-top: 18px;">
+                        <p>"We replaced spreadsheet chaos with one live dashboard. Finance review time dropped from hours to minutes."</p>
+                        <div class="text-muted" style="margin-top: 12px;">Aarav Sharma, Event Operations Lead</div>
+                    </div>
+                </div>
+                <div class="section-card">
+                    <p class="text-muted">Platform stats</p>
+                    <div class="stats-band" style="margin-top: 16px;">
+                        <div class="quote-card">
+                            <strong data-target="12" data-prefix="₹" data-suffix="M">0</strong>
+                            <span class="text-muted">tracked budgets</span>
+                        </div>
+                        <div class="quote-card">
+                            <strong data-target="1240" data-suffix="+">0</strong>
+                            <span class="text-muted">receipts reviewed</span>
+                        </div>
+                        <div class="quote-card">
+                            <strong data-target="87">0</strong>
+                            <span class="text-muted">high-risk alerts caught</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="footer">
+        <div class="section-card" style="padding: 1rem 1.25rem;">
+            <div class="section-head" style="margin-bottom: 0;">
+                <div>
+                    <strong>Event Finance AI</strong>
+                    <div class="text-muted">Modern event budgeting, receipt intelligence, and anomaly monitoring.</div>
+                </div>
+                <div class="text-muted">Designed for a fast landing-to-workspace flow.</div>
+            </div>
         </div>
+    </footer>
 
-        <!-- Product Capabilities -->
-        <div class="features-grid fade-in-element">
-            <div class="feature-item">
-                <div class="feature-icon">⚡</div>
-                <h3 style="margin-bottom: 0.4rem;">Track Instantly</h3>
-                <p class="text-muted">Log expenses directly from the floor and see them mapped to your budgets instantly.</p>
-            </div>
-            <div class="feature-item">
-                <div class="feature-icon">🤖</div>
-                <h3 style="margin-bottom: 0.4rem;">AI Detection</h3>
-                <p class="text-muted">We use advanced pattern matching to detect anomalous spending right when it happens.</p>
-            </div>
-            <div class="feature-item">
-                <div class="feature-icon">📈</div>
-                <h3 style="margin-bottom: 0.4rem;">Clear Reporting</h3>
-                <p class="text-muted">A clear, modern dashboard to prove exactly where funds are being allocated seamlessly.</p>
-            </div>
-        </div>
-
-    </div>
-
-    <!-- UI Core Script -->
     <script>
-        // Dark Mode Toggle Logic
-        const themeToggle = document.getElementById('themeToggle');
-        const rootElement = document.documentElement;
+        function animateCounter(node, endValue, prefix = "", suffix = "") {
+            const duration = 1200;
+            const start = performance.now();
 
-        function updateToggleIcon() {
-            const isDark = rootElement.getAttribute('data-theme') === 'dark';
-            themeToggle.innerHTML = isDark ? '☀️' : '🌙';
+            function tick(now) {
+                const progress = Math.min((now - start) / duration, 1);
+                const current = Math.round(endValue * progress);
+                node.textContent = `${prefix}${current.toLocaleString()}${suffix}`;
+                if (progress < 1) requestAnimationFrame(tick);
+            }
+
+            requestAnimationFrame(tick);
         }
 
-        updateToggleIcon();
-
-        themeToggle.addEventListener('click', () => {
-            const currentTheme = rootElement.getAttribute('data-theme');
-            let newTheme = 'light';
-            if (currentTheme !== 'dark') {
-                newTheme = 'dark';
-            }
-            rootElement.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-            updateToggleIcon();
-        });
-
-        // Intersection Observer for scroll fades
-        document.addEventListener('DOMContentLoaded', () => {
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.add('visible');
-                    }
-                });
-            }, { threshold: 0.1 });
-
-            document.querySelectorAll('.fade-in-element').forEach((el) => {
-                observer.observe(el);
-                // Also just manually trigger them if they are above fold immediately
-                setTimeout(() => el.classList.add('visible'), 100);
-            });
+        document.querySelectorAll("[data-target]").forEach((node) => {
+            animateCounter(
+                node,
+                Number(node.dataset.target),
+                node.dataset.prefix || "",
+                node.dataset.suffix || ""
+            );
         });
     </script>
 </body>

@@ -1,14 +1,29 @@
 # Dependencies
 node_modules/
 .npm/
+package-lock.json
+yarn.lock
 
 # Environment variables and secrets
 .env
 .env.*
 !.env.example
 
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+
 # OCR trained data
 *.traineddata
+
+# Temporary build/helper scripts
+write_html.py
+rewrite_index.py
 
 # Logs
 logs/
@@ -39,3 +54,14 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
+*.iml
+
+# Deployment
+.netlify/
+.vercel/
+.env.local
+.env.production
+
+# Cache
+.cache/
+*.cache

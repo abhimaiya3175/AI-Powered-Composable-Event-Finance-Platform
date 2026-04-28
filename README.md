@@ -59,7 +59,7 @@ Follow these instructions to get a copy of the project up and running on your lo
 ### 🛠️ Prerequisites
 
 Before you begin, ensure you have the following installed and set up:
-- **[Node.js](https://nodejs.org/)**: Version 14.x or newer.
+- **[Node.js](https://nodejs.org/)**: Version 18.x or newer.
 - **[MongoDB Atlas](https://www.mongodb.com/cloud/atlas)**: A free cluster and your connection string (URI).
 - **[Cloudinary](https://cloudinary.com/)**: A free tier account to obtain your API keys for image storage.
 - **Git**: For cloning the repository.
@@ -75,7 +75,7 @@ cd AI-Powered-Composable-Event-Finance-Platform
 
 You need to configure the environment variables for the backend to connect to the database and external services.
 
-1. Create a file named `.env` in the root directory of the project (same level as this README).
+1. Create a file named `.env` in the `backend` directory.
 2. Add the following keys and replace the placeholder values with your actual credentials:
 
 ```env
@@ -87,15 +87,15 @@ CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
 
-# Server Port (Optional, defaults to 5000)
+# Server Port (Optional, defaults to 5000; will fallback to 5001 if 5000 is busy)
 PORT=5000
 ```
 
 > **Security Note**: Never commit your `.env` file to version control. It is included in `.gitignore` by default.
 
-### 3️⃣ Running the Backend Server
+### 3️⃣ Running the Integrated Application (Backend + Frontend)
 
-The backend provides the API for the frontend application.
+The backend server automatically serves the frontend static files from the `frontend/` directory.
 
 ```bash
 # Navigate to the backend directory
@@ -107,32 +107,21 @@ npm install
 # Start the development server
 npm start
 ```
-*The server should now be running on `http://localhost:5000` (or the port you specified).*
 
-### 4️⃣ Running the Frontend Application
+**The full application will be running at:**
+- **Frontend**: `http://localhost:5000/` or `http://localhost:5001/` (if 5000 is busy)
+- **API Endpoints**: `http://localhost:5000/events`, `http://localhost:5000/expenses`, etc.
 
-Since the frontend consists of static files, you can run it using any static file server or simply open the HTML files in your browser.
+The frontend automatically detects the backend API and falls back through multiple ports (5001, 5000, and 127.0.0.1 variants) to find the live server.
 
-**Option A: Using a Live Server (Recommended)**
-If you are using VS Code, install the "Live Server" extension.
-1. Right-click on `frontend/index.html`.
-2. Select "Open with Live Server".
+### 4️⃣ Navigation Flow
 
-**Option B: Simple HTTP Server (Python or Node)**
-```bash
-# Navigate to the frontend directory
-cd frontend
+1. **Homepage** (`/`): Landing page with features and call-to-action buttons
+2. **Roles Selection** (`/roles.html`): Choose between Event Admin or Finance Manager
+3. **Event Admin Dashboard** (`/dashboard.html`): View events, budget stats, expense breakdown, and fraud alerts
+4. **Finance Manager Workspace** (`/add-event.html`): Create events, add expenses, upload receipts
 
-# If you have Python installed:
-python -m http.server 8000
-# Then open http://localhost:8000 in your browser
-
-# Or using Node.js 'serve' package (if installed globally):
-npx serve .
-```
-
-**Frontend Configuration:**
-Ensure that `frontend/config.js` is pointing to your local backend server during development (e.g., `http://localhost:5000/api`).
+All pages link through the navbar and are accessible from the backend-served URL.
 
 ## 🌍 Deployment Guide
 

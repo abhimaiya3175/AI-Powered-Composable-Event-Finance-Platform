@@ -3,600 +3,524 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Operations - EventFi</title>
-    <!-- Prevent FOUC for dark mode -->
-    <script>
-        const storedTheme = localStorage.getItem('theme');
-        if (storedTheme === 'dark' || (!storedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.setAttribute('data-theme', 'dark');
-        }
-    </script>
+    <title>Finance Manager Workspace</title>
     <link rel="stylesheet" href="style.css">
     <script src="config.js"></script>
-    <style>
-        .operations-shell {
-            display: grid;
-            gap: 1.25rem;
-        }
-
-        /* Full-width horizontal chip bar — sits below the title */
-        .operations-summary-bar {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 0.94rem;   /* 0.75 × 1.25 */
-            width: 100%;
-        }
-
-        .summary-chip {
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-md);
-            background: var(--bg-card);
-            padding: 0.94rem 1.25rem;  /* 0.75×1.25 / 1×1.25 */
-            box-shadow: var(--shadow-sm);
-            display: flex;
-            align-items: center;
-            gap: 0.81rem;   /* 0.65 × 1.25 */
-            transition: box-shadow 0.2s ease, transform 0.2s ease;
-        }
-
-        .summary-chip:hover {
-            box-shadow: var(--shadow-md);
-            transform: translateY(-1px);
-        }
-
-        .summary-chip-icon {
-            font-size: 1.56rem;  /* 1.25 × 1.25 */
-            flex-shrink: 0;
-        }
-
-        .summary-chip-body strong {
-            display: block;
-            color: var(--text-dark);
-            font-family: var(--font-heading);
-            font-size: 1.05rem;  /* 0.84 × 1.25 */
-            margin-bottom: 0.19rem;
-        }
-
-        .summary-chip-body span {
-            color: var(--text-muted);
-            font-size: 0.95rem;  /* 0.76 × 1.25 */
-            line-height: 1.3;
-        }
-
-        .operations-title {
-            padding-top: 0;
-        }
-
-        .page-split {
-            display: grid;
-            grid-template-columns: repeat(12, minmax(0, 1fr));
-            gap: 1.2rem;
-            align-items: start;
-        }
-
-        .operations-column-left {
-            grid-column: span 7;
-            display: grid;
-            gap: 1.2rem;
-        }
-
-        .operations-column-right {
-            grid-column: span 5;
-        }
-
-        @media (max-width: 980px) {
-            .operations-summary-bar {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            .operations-column-left,
-            .operations-column-right {
-                grid-column: span 12;
-            }
-        }
-
-        @media (max-width: 560px) {
-            .operations-summary-bar {
-                grid-template-columns: 1fr 1fr;
-            }
-        }
-
-        #imagePreview {
-            max-width: 100%;
-            max-height: 150px;
-            border-radius: var(--radius-sm);
-            margin-top: 1rem;
-            display: none;
-            box-shadow: var(--shadow-sm);
-            border: 1px solid var(--border-color);
-        }
-
-        .event-list-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem;
-            border-radius: var(--radius-md);
-            border: 1px solid var(--border-color);
-            margin-bottom: 0.75rem;
-            cursor: pointer;
-            transition: var(--transition-smooth);
-            background: var(--bg-card);
-        }
-
-        .event-list-item:hover {
-            border-color: var(--primary-color);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-        }
-        
-        .event-list-item.selected {
-            border-color: var(--primary-color);
-            background: var(--primary-light);
-            border-width: 2px;
-        }
-        
-        html[data-theme="dark"] .event-list-item.selected {
-            background: rgba(99, 102, 241, 0.15);
-        }
-    </style>
 </head>
 <body>
-
-    <!-- Toast Container -->
     <div id="toast-container"></div>
 
-    <!-- Custom Confirm Modal -->
-    <div class="modal-overlay" id="confirmModal">
-        <div class="modal-content text-center">
-            <div style="font-size:3rem; margin-bottom:1rem;">🗑️</div>
-            <h3 style="margin-bottom: 0.5rem; color:var(--text-dark);">Delete Operations Log?</h3>
-            <p class="text-muted" style="margin-bottom: 2rem;">This action will permanently delete this event and all its associated expenses. This cannot be undone.</p>
-            <div class="flex-row justify-between w-full">
-                <button class="btn btn-outline" style="flex:1;" onclick="closeModal()">Cancel</button>
-                <button class="btn" style="flex:1; background:var(--danger); color:white; border:none;" id="confirmDeleteBtn">Yes, Delete</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Navbar -->
-    <nav class="navbar">
-        <div class="brand-logo">
-            <span>🔷</span> EventFi
-        </div>
-        <div class="nav-links">
-            <a href="index.html" class="nav-link">Home</a>
-            <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
-                🌙
-            </button>
-        </div>
-    </nav>
-
-    <div class="container operations-shell">
-        
-        <!-- Page title -->
-        <div class="operations-title">
-            <h1 style="font-family: var(--font-heading); font-size: clamp(1.8rem, 4vw, 2.7rem); line-height: 1.05; margin-bottom: 0.45rem;">Operations Manager</h1>
-            <p class="text-muted" style="font-size: 1rem; max-width: 650px;">Allocate budgets, initialize new events, and submit digital proofs in one grid-driven operations board.</p>
-        </div>
-
-        <!-- Horizontal feature bar — below the title -->
-        <div class="operations-summary-bar" aria-label="Page feature summary">
-            <div class="summary-chip">
-                <span class="summary-chip-icon">🚀</span>
-                <div class="summary-chip-body">
-                    <strong>Portfolio Setup</strong>
-                    <span>Budget + naming workflow</span>
-                </div>
-            </div>
-            <div class="summary-chip">
-                <span class="summary-chip-icon">🎫</span>
-                <div class="summary-chip-body">
-                    <strong>Ticket Intake</strong>
-                    <span>Receipts with categories</span>
-                </div>
-            </div>
-            <div class="summary-chip">
-                <span class="summary-chip-icon">⚡</span>
-                <div class="summary-chip-body">
-                    <strong>Live Sync</strong>
-                    <span>Connected to event API</span>
-                </div>
-            </div>
-            <div class="summary-chip">
-                <span class="summary-chip-icon">⊞</span>
-                <div class="summary-chip-body">
-                    <strong>Design Grid</strong>
-                    <span>Responsive 12-column layout</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="page-split">
-
-            <!-- LEFT COLUMN: CREATE & BROWSE -->
-            <div class="operations-column-left">
-                
-                <!-- Create Form -->
-                <div class="card" style="margin: 0; position:relative; overflow:hidden;">
-                    <!-- subtle background accent -->
-                    <div style="position:absolute; top:-50px; right:-50px; width:150px; height:150px; background:var(--primary-gradient); filter:blur(60px); opacity:0.1; pointer-events:none;"></div>
-                    
-                    <div class="card-title">🚀 Create Event Portfolio</div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Project Name</label>
-                        <input id="name" class="form-control" placeholder="e.g. Annual Tech Summit 2025" oninput="removeError('name')">
-                        <div class="error-text" id="nameError">Name is required</div>
+    <div class="workspace no-sidebar">
+        <main class="workspace-main">
+            <div class="topbar">
+                <div class="topbar-left">
+                    <a href="index.html" class="brand-logo"><span>EF</span> Event Finance AI</a>
+                    <div class="nav-links">
+                        <a href="roles.html" class="nav-link">Roles</a>
                     </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Total Allocated Budget (₹)</label>
-                        <input id="budget" type="number" class="form-control" placeholder="e.g. 500000" oninput="removeError('budget')">
-                        <div class="error-text" id="budgetError">Valid budget > 0 is required</div>
+                    <div class="search-shell">
+                        <input class="form-control" placeholder="Finance workspace">
                     </div>
-                    
-                    <button onclick="submitNewEvent()" class="btn btn-primary w-full" id="createBtn">Initialize Event</button>
                 </div>
+                <div class="topbar-right">
+                    <button class="icon-btn" title="Notifications">🔔</button>
+                    <button class="avatar-btn">
+                        <span class="avatar-dot"></span>
+                        <span>Manager</span>
+                    </button>
+                </div>
+            </div>
 
-                <!-- Existing Events -->
-                <div class="card" style="margin: 0;">
-                    <div class="flex-row justify-between mb-4">
-                        <div class="card-title" style="margin: 0;">Active Portfolios</div>
-                        <button onclick="loadAllEvents()" class="btn btn-outline" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">↺ Refresh</button>
+            <section class="workspace-section card" id="portfolio">
+                <p class="text-muted">Finance Manager</p>
+                <h1 class="page-title" style="font-size: clamp(2rem, 4vw, 3.2rem); margin-bottom: 10px;">Create and manage <span class="accent">event portfolios</span></h1>
+                <p class="text-muted">Set budgets, choose an active event, upload receipts with progress feedback, and see the latest submitted expense entries.</p>
+            </section>
+
+            <section class="workspace-section manager-grid" style="grid-template-columns: minmax(0, 1fr) minmax(360px, 0.95fr);">
+                <div class="card">
+                    <p class="text-muted">Create Event Portfolio</p>
+                    <div class="manager-form-grid" style="grid-template-columns: minmax(0, 1fr) 220px; margin-top: 14px;">
+                        <div class="form-group">
+                            <label class="form-label">Event Name</label>
+                            <input id="name" class="form-control" placeholder="Annual Tech Summit 2026">
+                            <div class="error-text" id="nameError">Event name is required.</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Budget</label>
+                            <input id="budget" type="number" class="form-control" placeholder="500000">
+                            <div class="error-text" id="budgetError">Valid budget is required.</div>
+                        </div>
                     </div>
-                    
-                    <div id="eventsList" style="max-height: 400px; overflow-y:auto; padding-right:5px;">
-                        <div class="text-center text-muted" style="padding:2rem;">Loading portfolios...</div>
+                    <div class="cta-row">
+                        <button class="btn btn-primary" id="createBtn">Create Event</button>
                     </div>
                 </div>
 
-            </div>
-
-            <!-- RIGHT COLUMN: EXPENSE SUBMISSION -->
-            <div class="operations-column-right">
-                <div class="card" style="margin: 0; border-top: 4px solid var(--primary-color); height: 100%;">
-                    <div class="card-title">💸 Submit Expense Ticket</div>
-                    
-                    <!-- Context Switcher Alert -->
-                    <div id="selectedEventLabel" style="background: var(--slate-100); color: var(--slate-600); border: 1px dashed var(--slate-300); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 2rem; font-size: 0.95rem; text-align:center;">
-                        Please select an event portfolio from the left to begin submitting expenses.
+                <div class="card">
+                    <p class="text-muted">Active selection</p>
+                    <div class="status-card" id="selectedEventLabel" style="margin-top: 16px;">
+                        <strong>No event selected</strong>
+                        <div class="text-muted">Choose an event to start logging expenses.</div>
                     </div>
+                    <div class="status-card" style="margin-top: 14px;">
+                        <strong>Workflow summary</strong>
+                        <div class="text-muted" style="margin-top: 8px;">Create an event, select it from the portfolio list, add an expense with an optional receipt, then review the latest entries below.</div>
+                    </div>
+                </div>
+            </section>
 
+            <section class="workspace-section card">
+                <div class="section-head">
+                    <div>
+                        <p class="text-muted">Select Event</p>
+                        <h3>Existing event portfolios</h3>
+                    </div>
+                    <button class="btn btn-outline" id="refreshEventsBtn">Refresh</button>
+                </div>
+                <div id="eventsList" class="event-selector-grid"></div>
+            </section>
+
+            <section class="workspace-section manager-grid" style="grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);">
+                <div class="card" id="expense-form">
+                    <p class="text-muted">Add Expense Form</p>
                     <input id="expenseEventId" type="hidden">
-
-                    <div class="form-group">
-                        <label class="form-label">Amount Spent (₹)</label>
-                        <input id="expenseAmount" type="number" class="form-control" placeholder="0.00" oninput="removeError('expenseAmount')">
-                        <div class="error-text" id="expenseAmountError">Valid amount is required</div>
+                    <div class="manager-form-grid" style="grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 16px;">
+                        <div class="form-group">
+                            <label class="form-label">Amount</label>
+                            <input id="expenseAmount" type="number" class="form-control" placeholder="0.00">
+                            <div class="error-text" id="expenseAmountError">Valid amount is required.</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Category</label>
+                            <select id="expenseCategory" class="form-control">
+                                <option value="">Select category</option>
+                                <option value="Venue">Venue</option>
+                                <option value="Catering">Catering</option>
+                                <option value="Logistics">Logistics</option>
+                                <option value="Marketing">Marketing</option>
+                                <option value="Audio/Visual">Audio/Visual</option>
+                                <option value="Misc">Misc</option>
+                            </select>
+                            <div class="error-text" id="expenseCategoryError">Category is required.</div>
+                        </div>
                     </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Category</label>
-                        <select id="expenseCategory" class="form-control" onchange="removeError('expenseCategory')">
-                            <option value="" disabled selected>Select a category...</option>
-                            <option value="Venue">Venue & Operations</option>
-                            <option value="Catering">Food & Catering</option>
-                            <option value="Logistics">Transport & Logistics</option>
-                            <option value="Marketing">Marketing</option>
-                            <option value="Audio/Visual">Audio & Visual</option>
-                            <option value="Misc">Miscellaneous</option>
-                        </select>
-                        <div class="error-text" id="expenseCategoryError">Category is required</div>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Receipt Proof (Image)</label>
-                        
+                    <div class="form-group" style="margin-top: 16px;">
+                        <label class="form-label">Upload Receipt</label>
                         <div class="drop-zone" id="dropZone">
-                            <span class="drop-zone-icon">📄</span>
-                            <span class="text-muted" id="dropZoneText">Click or Drag & Drop to upload receipt file</span>
-                            <input type="file" id="expenseReceipt" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; opacity: 0; cursor: pointer;" accept="image/*">
+                            <div style="font-size: 1.7rem;">🧾</div>
+                            <strong>Drop receipt image here</strong>
+                            <span class="text-muted" id="dropZoneText">PNG or JPG receipt upload</span>
+                            <input type="file" id="expenseReceipt" accept="image/*">
                         </div>
-                        <div style="display:flex; justify-content:center;">
-                            <img id="imagePreview" alt="Receipt Preview">
+                        <img id="imagePreview" class="receipt-preview" alt="Receipt preview">
+                        <div class="upload-progress hidden" id="uploadProgress">
+                            <div class="upload-progress-bar"><div class="upload-progress-fill" id="uploadProgressFill"></div></div>
+                            <div class="text-muted" id="uploadProgressText" style="margin-top: 8px;">Uploading 0%</div>
                         </div>
                     </div>
+                    <div class="cta-row">
+                        <button class="btn btn-primary" id="expenseBtn">Submit Expense</button>
+                    </div>
+                </div>
 
-                    <button onclick="addExpense()" class="btn btn-primary w-full" id="expenseBtn" style="margin-top:1rem; opacity: 0.5; pointer-events:none;">Submit Ticket 🔒</button>
-                    
+                <div class="card">
+                    <p class="text-muted">System behavior</p>
+                    <div class="status-card" style="margin-top: 16px;">
+                        <strong>AI verification badges</strong>
+                        <div class="flags-wrap" style="margin-top: 12px;">
+                            <span class="badge badge-success">verified</span>
+                            <span class="badge badge-warning">rule-based</span>
+                            <span class="badge badge-danger">ml anomaly</span>
+                            <span class="badge badge-info">ocr pending</span>
+                        </div>
+                    </div>
+                    <div class="status-card" style="margin-top: 14px;">
+                        <strong>Responsive workspace</strong>
+                        <div class="text-muted" style="margin-top: 8px;">Cards stack vertically on mobile, tables scroll horizontally, and the sidebar collapses to a hamburger menu.</div>
+                    </div>
+                    <div class="status-card" style="margin-top: 14px;">
+                        <strong>Upload feedback</strong>
+                        <div class="text-muted" style="margin-top: 8px;">Receipt previews are shown instantly, while the progress bar simulates upload activity until the backend call completes.</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="workspace-section card" id="expense-list">
+                <p class="text-muted">Expense List</p>
+                <h3 style="margin-bottom: 14px;">Submitted entries</h3>
+                <div id="expenseList" class="expense-list"></div>
+            </section>
+        </main>
+    </div>
+
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal-content">
+            <div class="section-head" style="margin-bottom: 14px;">
+                <div>
+                    <p class="text-muted">Delete portfolio</p>
+                    <h3>Remove selected event?</h3>
                 </div>
             </div>
-
+            <p class="text-muted" style="margin-bottom: 16px;">This also deletes all related expenses.</p>
+            <div class="cta-row">
+                <button class="btn btn-outline" id="cancelDeleteBtn">Cancel</button>
+                <button class="btn btn-primary" id="confirmDeleteBtn">Delete</button>
+            </div>
         </div>
     </div>
 
-    <!-- UI Scripts -->
     <script>
-        
-        /* -- Global UI Utilities -- */
-        const themeToggle = document.getElementById('themeToggle');
-        const rootElement = document.documentElement;
+        const dropZone = document.getElementById("dropZone");
+        const fileInput = document.getElementById("expenseReceipt");
+        const imagePreview = document.getElementById("imagePreview");
+        const dropZoneText = document.getElementById("dropZoneText");
+        const uploadProgress = document.getElementById("uploadProgress");
+        const uploadProgressFill = document.getElementById("uploadProgressFill");
+        const uploadProgressText = document.getElementById("uploadProgressText");
 
-        themeToggle.addEventListener('click', () => {
-            let newTheme = rootElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-            rootElement.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-            themeToggle.innerHTML = newTheme === 'dark' ? '☀️' : '🌙';
+        let selectedEventId = "";
+        let selectedEventName = "";
+        let eventToDelete = "";
+        let eventsCache = [];
+        let uploadTimer = null;
+
+        document.getElementById("confirmModal").addEventListener("click", (event) => {
+            if (event.target.id === "confirmModal") closeModal();
         });
-        if(rootElement.getAttribute('data-theme') === 'dark') themeToggle.innerHTML = '☀️';
+        document.getElementById("createBtn").addEventListener("click", submitNewEvent);
+        document.getElementById("expenseBtn").addEventListener("click", addExpense);
+        document.getElementById("refreshEventsBtn").addEventListener("click", loadAllEvents);
+        document.getElementById("cancelDeleteBtn").addEventListener("click", closeModal);
+        document.getElementById("confirmDeleteBtn").addEventListener("click", deleteEventConfirmed);
 
-        function showToast(message, type = 'success') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = `toast toast-${type}`;
-            toast.innerHTML = `<span>${type==='success'?'✅':(type==='error'?'❌':'⚠️')}</span> <div>${message}</div>`;
-            container.appendChild(toast);
-            setTimeout(() => { toast.classList.add('fade-out'); toast.addEventListener('animationend', () => toast.remove()); }, 3500);
-        }
-
-        function removeError(id) {
-            document.getElementById(id).classList.remove('is-invalid');
-            document.getElementById(id+'Error').style.display = 'none';
-        }
-
-        function triggerError(id, msg) {
-            document.getElementById(id).classList.add('is-invalid');
-            document.getElementById(id+'Error').innerText = msg;
-            document.getElementById(id+'Error').style.display = 'block';
-        }
-
-        /* -- Modals -- */
-        let eventToDelete = null;
-        function openDeleteModal(id) {
-            eventToDelete = id;
-            document.getElementById('confirmModal').classList.add('active');
-        }
-        function closeModal() {
-            eventToDelete = null;
-            document.getElementById('confirmModal').classList.remove('active');
-        }
-        document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
-            if(!eventToDelete) return;
-            const originalText = document.getElementById('confirmDeleteBtn').innerText;
-            document.getElementById('confirmDeleteBtn').innerText = "Deleting...";
-            try {
-                const res = await apiFetch(`/events/delete/${eventToDelete}`, { method: "DELETE" });
-                if(res.ok) {
-                    showToast('Portfolio terminated successfully');
-                    document.getElementById('expenseEventId').value = ""; // clear selection if active
-                    unlockExpenseForm(""); 
-                    loadAllEvents();
-                } else {
-                    showToast('Failed to delete', 'error');
-                }
-            } catch (err) {
-                showToast('API Error during deletion', 'error');
-            } finally {
-                document.getElementById('confirmDeleteBtn').innerText = originalText;
-                closeModal();
+        ["dragenter", "dragover", "dragleave", "drop"].forEach((eventName) => {
+            dropZone.addEventListener(eventName, (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+            });
+        });
+        ["dragenter", "dragover"].forEach((eventName) => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.add("dragover"));
+        });
+        ["dragleave", "drop"].forEach((eventName) => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.remove("dragover"));
+        });
+        dropZone.addEventListener("drop", (event) => {
+            const file = event.dataTransfer.files[0];
+            if (file) {
+                fileInput.files = event.dataTransfer.files;
+                handleFilePreview(file);
             }
         });
-
-        /* -- Drag & Drop Logic -- */
-        const dropZone = document.getElementById('dropZone');
-        const fileInput = document.getElementById('expenseReceipt');
-        const imgPreview = document.getElementById('imagePreview');
-        const dropText = document.getElementById('dropZoneText');
-
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evName => {
-            dropZone.addEventListener(evName, (e) => { e.preventDefault(); e.stopPropagation(); }, false);
-        });
-        ['dragenter', 'dragover'].forEach(evName => {
-            dropZone.addEventListener(evName, () => dropZone.classList.add('dragover'), false);
-        });
-        ['dragleave', 'drop'].forEach(evName => {
-            dropZone.addEventListener(evName, () => dropZone.classList.remove('dragover'), false);
+        fileInput.addEventListener("change", () => {
+            if (fileInput.files[0]) handleFilePreview(fileInput.files[0]);
         });
 
-        dropZone.addEventListener('drop', (e) => {
-            const file = e.dataTransfer.files[0];
-            fileInput.files = e.dataTransfer.files; 
-            handleFilePreview(file);
-        });
-        fileInput.addEventListener('change', function() {
-            if(this.files && this.files[0]) handleFilePreview(this.files[0]);
-        });
+        function showToast(message, type = "success") {
+            const toast = document.createElement("div");
+            toast.className = `toast toast-${type}`;
+            toast.textContent = message;
+            document.getElementById("toast-container").appendChild(toast);
+            setTimeout(() => toast.remove(), 3200);
+        }
+
+        function formatCurrency(value) {
+            return `₹${Number(value || 0).toLocaleString()}`;
+        }
+
+        function clearValidation(id) {
+            document.getElementById(id).classList.remove("is-invalid");
+            document.getElementById(`${id}Error`).style.display = "none";
+        }
+
+        function setValidation(id, message) {
+            document.getElementById(id).classList.add("is-invalid");
+            const node = document.getElementById(`${id}Error`);
+            node.textContent = message;
+            node.style.display = "block";
+        }
 
         function handleFilePreview(file) {
-            if(file && file.type.startsWith('image/')) {
-                dropText.innerText = file.name;
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    imgPreview.src = e.target.result;
-                    imgPreview.style.display = 'block';
-                }
-                reader.readAsDataURL(file);
-            } else {
-                dropText.innerText = "Please upload an image file.";
-                imgPreview.style.display = 'none';
+            if (!file.type.startsWith("image/")) {
+                showToast("Please upload an image receipt", "error");
                 fileInput.value = "";
+                return;
             }
+            dropZoneText.textContent = file.name;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                imagePreview.src = event.target.result;
+                imagePreview.style.display = "block";
+            };
+            reader.readAsDataURL(file);
         }
+
         function clearFilePreview() {
-            dropText.innerText = "Click or Drag & Drop to upload receipt file";
-            imgPreview.style.display = 'none';
-            imgPreview.src = "";
             fileInput.value = "";
+            imagePreview.src = "";
+            imagePreview.style.display = "none";
+            dropZoneText.textContent = "PNG or JPG receipt upload";
+            resetUploadProgress();
         }
 
-        /* -- Application Logic --*/
-        
-        async function submitNewEvent() {
-            const name = document.getElementById("name").value.trim();
-            const budgetStr = document.getElementById("budget").value;
-            let isValid = true;
+        function setSelectedEvent(id, name) {
+            selectedEventId = id;
+            selectedEventName = name;
+            document.getElementById("expenseEventId").value = id;
+            document.getElementById("selectedEventLabel").innerHTML = `
+                <strong>${name}</strong>
+                <div class="text-muted">Event selected. Expense submissions will be attached to this portfolio.</div>
+            `;
+            renderEventsList();
+            loadExpensesForSelectedEvent();
+        }
 
-            if(!name) { triggerError('name', 'Portfolio name required'); isValid = false; }
-            if(!budgetStr || isNaN(budgetStr) || Number(budgetStr) <= 0) { triggerError('budget', 'Valid budget required'); isValid = false; }
-
-            if(!isValid) return;
-
-            const btn = document.getElementById("createBtn");
-            btn.innerHTML = `<span style="display:inline-block; animation: spin 1s linear infinite;">⏳</span> Initializing...`;
-
-            try {
-                const res = await apiFetch("/events/create", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ name, totalBudget: Number(budgetStr) })
-                });
-
-                if(res.ok) {
-                    const data = await res.json();
-                    showToast('Portfolio initialized successfully!', 'success');
-                    
-                    // Reset Form
-                    document.getElementById("name").value = "";
-                    document.getElementById("budget").value = "";
-                    
-                    // Soft select new event
-                    selectEvent(data._id, data.name);
-                    loadAllEvents();
-                } else {
-                    showToast('Server rejected the request', 'error');
-                }
-            } catch (err) {
-                showToast("Connection failed", "error");
-            } finally {
-                btn.innerHTML = "Initialize Event";
+        function renderEventsList() {
+            const list = document.getElementById("eventsList");
+            if (!eventsCache.length) {
+                list.innerHTML = `<div class="event-card"><div class="text-muted">No events found.</div></div>`;
+                return;
             }
+            list.innerHTML = eventsCache.map((event) => `
+                <div class="event-card ${event._id === selectedEventId ? "selected" : ""}" data-id="${event._id}">
+                    <div style="display:flex; justify-content:space-between; gap:12px;">
+                        <div>
+                            <div style="font-weight:700;">${event.name}</div>
+                            <div class="text-muted" style="font-size:0.84rem; margin-top:4px;">${event._id}</div>
+                            <div class="text-muted" style="margin-top:8px;">Budget ${formatCurrency(event.totalBudget)}</div>
+                        </div>
+                        <button class="btn btn-outline delete-event-btn" data-delete-id="${event._id}">Delete</button>
+                    </div>
+                </div>
+            `).join("");
+
+            list.querySelectorAll("[data-id]").forEach((node) => {
+                node.addEventListener("click", () => {
+                    const event = eventsCache.find((item) => item._id === node.dataset.id);
+                    if (event) setSelectedEvent(event._id, event.name);
+                });
+            });
+
+            list.querySelectorAll(".delete-event-btn").forEach((button) => {
+                button.addEventListener("click", (event) => {
+                    event.stopPropagation();
+                    openDeleteModal(button.dataset.deleteId);
+                });
+            });
         }
 
         async function loadAllEvents() {
-            const list = document.getElementById("eventsList");
-            list.innerHTML = `<div class="skeleton" style="height: 60px; margin-bottom:10px;"></div><div class="skeleton" style="height: 60px; margin-bottom:10px;"></div><div class="skeleton" style="height: 60px;"></div>`;
-            
-            try {
-                const res = await apiFetch("/events");
-                const events = await res.json();
-                list.innerHTML = "";
-
-                if (events.length === 0) {
-                    list.innerHTML = `
-                      <div class="text-center" style="padding: 2rem;">
-                         <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="var(--slate-400)" stroke-width="1.5" style="margin-bottom:1rem;">
-                            <path d="M19 11H5M19 11C20.1046 11 21 11.8954 21 13V19C21 20.1046 20.1046 21 19 21H5C3.89543 21 3 20.1046 3 19V13C3 11.8954 3.89543 11 5 11M19 11V9C19 7.89543 18.1046 7 17 7M5 11V9C5 7.89543 5.89543 7 7 7M7 7V5C7 3.89543 7.89543 3 9 3H15C16.1046 3 17 3.89543 17 5V7M7 7H17" />
-                         </svg>
-                         <div class="text-muted">No operating portfolios exist yet.<br>Create one above to begin.</div>
-                      </div>`;
-                    return;
-                }
-
-                // Get current active selection to highlight
-                const activeId = document.getElementById("expenseEventId").value;
-
-                events.forEach(e => {
-                    const el = document.createElement('div');
-                    el.className = `event-list-item ${e._id === activeId ? 'selected' : ''}`;
-                    el.onclick = () => selectEvent(e._id, e.name);
-
-                    el.innerHTML = `
-                        <div>
-                            <div style="font-weight: 600; color:var(--text-dark);">${e.name}</div>
-                            <div class="text-muted" style="font-size: 0.8rem; font-family: monospace; margin-top:2px;">${e._id}</div>
-                            <div style="font-size: 0.8rem; color: var(--primary-color); font-weight:600; margin-top:2px;">₹${e.totalBudget.toLocaleString()} Total</div>
-                        </div>
-                        <button onclick="event.stopPropagation(); openDeleteModal('${e._id}')" class="btn btn-outline" style="padding:0.35rem; border-color:transparent; color:var(--danger);" title="Delete Portfolio">
-                            <span style="font-size:1.2rem;">🗑️</span>
-                        </button>
-                    `;
-                    list.appendChild(el);
-                });
-            } catch (err) {
-                list.innerHTML = `<div class="text-danger p-4 text-center">Connection error fetching events.</div>`;
+            const response = await apiFetch("/events");
+            const events = await response.json();
+            eventsCache = events.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            renderEventsList();
+            if (!selectedEventId && eventsCache[0]) {
+                setSelectedEvent(eventsCache[0]._id, eventsCache[0].name);
             }
         }
 
-        function selectEvent(id, name) {
-            document.getElementById("expenseEventId").value = id;
-            unlockExpenseForm(name);
-            loadAllEvents(); // re-render list to apply 'selected' class mapping visually
+        async function submitNewEvent() {
+            const name = document.getElementById("name").value.trim();
+            const budget = Number(document.getElementById("budget").value);
+            let valid = true;
+
+            clearValidation("name");
+            clearValidation("budget");
+
+            if (!name) {
+                setValidation("name", "Event name is required.");
+                valid = false;
+            }
+            if (!budget || budget <= 0) {
+                setValidation("budget", "Budget must be greater than zero.");
+                valid = false;
+            }
+            if (!valid) return;
+
+            const button = document.getElementById("createBtn");
+            button.disabled = true;
+            button.textContent = "Creating...";
+
+            try {
+                const response = await apiFetch("/events/create", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name, totalBudget: budget })
+                });
+                if (!response.ok) throw new Error("Unable to create event");
+                const created = await response.json();
+                showToast("Event portfolio created");
+                document.getElementById("name").value = "";
+                document.getElementById("budget").value = "";
+                await loadAllEvents();
+                setSelectedEvent(created._id, created.name);
+            } catch (error) {
+                console.error(error);
+                showToast("Failed to create event", "error");
+            } finally {
+                button.disabled = false;
+                button.textContent = "Create Event";
+            }
         }
 
-        function unlockExpenseForm(name) {
-            const label = document.getElementById("selectedEventLabel");
-            const btn = document.getElementById("expenseBtn");
+        function startUploadProgress() {
+            resetUploadProgress();
+            uploadProgress.classList.remove("hidden");
+            let progress = 0;
+            uploadTimer = setInterval(() => {
+                progress = Math.min(progress + Math.random() * 18, 92);
+                uploadProgressFill.style.width = `${progress}%`;
+                uploadProgressText.textContent = `Uploading ${Math.round(progress)}%`;
+            }, 180);
+        }
 
-            if(!name) { // Reset state
-               label.innerHTML = `Please select an event portfolio from the left to begin submitting expenses.`;
-               label.style.background = "var(--slate-100)";
-               label.style.borderColor = "var(--slate-300)";
-               label.style.color = "var(--slate-600)";
-               btn.style.opacity = "0.5";
-               btn.style.pointerEvents = "none";
-               btn.innerHTML = `Submit Ticket 🔒`;
-            } else { // Active State
-                label.innerHTML = `Currently modifying: <strong>${name}</strong>`;
-                label.style.background = "var(--primary-light)";
-                label.style.borderColor = "var(--primary-color)";
-                label.style.color = "var(--primary-color-dark)";
-                // Update dark mode specific overrides simply using CSS cascading isn't dynamic inline cleanly, but glass applies:
-                if(rootElement.getAttribute('data-theme') === 'dark'){
-                     label.style.background = "rgba(99, 102, 241, 0.15)";
-                     label.style.color = "var(--text-dark)";
+        function completeUploadProgress() {
+            uploadProgressFill.style.width = "100%";
+            uploadProgressText.textContent = "Uploading 100%";
+            clearInterval(uploadTimer);
+            uploadTimer = null;
+            setTimeout(() => resetUploadProgress(), 700);
+        }
+
+        function resetUploadProgress() {
+            clearInterval(uploadTimer);
+            uploadTimer = null;
+            uploadProgressFill.style.width = "0%";
+            uploadProgressText.textContent = "Uploading 0%";
+            uploadProgress.classList.add("hidden");
+        }
+
+        function openDeleteModal(id) {
+            eventToDelete = id;
+            document.getElementById("confirmModal").classList.add("active");
+        }
+
+        function closeModal() {
+            eventToDelete = "";
+            document.getElementById("confirmModal").classList.remove("active");
+        }
+
+        async function deleteEventConfirmed() {
+            if (!eventToDelete) return;
+            try {
+                const response = await apiFetch(`/events/delete/${eventToDelete}`, { method: "DELETE" });
+                if (!response.ok) throw new Error("Delete failed");
+                showToast("Event deleted");
+                if (selectedEventId === eventToDelete) {
+                    selectedEventId = "";
+                    selectedEventName = "";
+                    document.getElementById("selectedEventLabel").innerHTML = `<strong>No event selected</strong><div class="text-muted">Choose an event to start logging expenses.</div>`;
+                    document.getElementById("expenseList").innerHTML = "";
                 }
-
-                btn.style.opacity = "1";
-                btn.style.pointerEvents = "auto";
-                btn.innerHTML = `Submit Ticket`;
+                closeModal();
+                await loadAllEvents();
+            } catch (error) {
+                console.error(error);
+                showToast("Failed to delete event", "error");
             }
         }
 
         async function addExpense() {
-            const eventId = document.getElementById("expenseEventId").value;
-            const amount = document.getElementById("expenseAmount").value;
+            const amount = Number(document.getElementById("expenseAmount").value);
             const category = document.getElementById("expenseCategory").value;
             const receipt = fileInput.files[0];
-            
-            let isValid = true;
+            let valid = true;
 
-            if(!eventId){ showToast("No portfolio selected!", "error"); return; }
-            if(!amount || isNaN(amount) || amount <= 0){ triggerError('expenseAmount', 'Valid amount is required'); isValid = false; }
-            if(!category){ triggerError('expenseCategory', 'Category is required'); isValid = false; }
-            
-            if(!isValid) return;
+            clearValidation("expenseAmount");
+            clearValidation("expenseCategory");
 
-            const btn = document.getElementById("expenseBtn");
-            btn.innerHTML = `<span style="display:inline-block; animation: spin 1s linear infinite;">⏳</span> Uploading...`;
-            btn.disabled = true;
+            if (!selectedEventId) {
+                showToast("Select an event first", "error");
+                return;
+            }
+            if (!amount || amount <= 0) {
+                setValidation("expenseAmount", "Amount must be greater than zero.");
+                valid = false;
+            }
+            if (!category) {
+                setValidation("expenseCategory", "Category is required.");
+                valid = false;
+            }
+            if (!valid) return;
 
             const formData = new FormData();
-            formData.append("eventId", eventId);
+            formData.append("eventId", selectedEventId);
             formData.append("amount", amount);
             formData.append("category", category);
-            if(receipt) formData.append("receipt", receipt);
+            if (receipt) formData.append("receipt", receipt);
+
+            const button = document.getElementById("expenseBtn");
+            button.disabled = true;
+            button.textContent = "Submitting...";
+            startUploadProgress();
 
             try {
-                const res = await apiFetch("/expenses/add", {
+                const response = await apiFetch("/expenses/add", {
                     method: "POST",
                     body: formData
                 });
-                
-                if (res.ok) {
-                    showToast("Expense documented successfully!", "success");
-                    // Reset fields manually
-                    document.getElementById("expenseAmount").value = "";
-                    document.getElementById("expenseCategory").value = "";
-                    clearFilePreview();
-                } else {
-                    const errData = await res.json().catch(()=>({}));
-                    showToast(errData.message || "Failed to process expense", "error");
-                }
-            } catch (err) {
-                showToast("Connection to server failed.", "error");
+                const payload = await response.json().catch(() => ({}));
+                if (!response.ok) throw new Error(payload.message || "Expense submission failed");
+
+                completeUploadProgress();
+                showToast("Expense submitted successfully");
+                document.getElementById("expenseAmount").value = "";
+                document.getElementById("expenseCategory").value = "";
+                clearFilePreview();
+                await loadExpensesForSelectedEvent();
+            } catch (error) {
+                console.error(error);
+                resetUploadProgress();
+                showToast(error.message || "Expense submission failed", "error");
             } finally {
-                btn.innerHTML = "Submit Ticket";
-                btn.disabled = false;
+                button.disabled = false;
+                button.textContent = "Submit Expense";
             }
         }
 
-        // Initialize lists immediately
-        loadAllEvents();
+        function buildExpenseInsight(expense) {
+            if (!expense.receiptUrl) {
+                return `<span class="badge badge-warning">rule-based</span><span class="badge badge-info">ocr pending</span>`;
+            }
+            if (Number(expense.amount) >= 100000) {
+                return `<span class="badge badge-danger">ml anomaly</span><span class="badge badge-warning">review</span>`;
+            }
+            return `<span class="badge badge-success">verified</span>`;
+        }
 
-        // Keyframe CSS inject for spinning dynamically in buttons
-        const styleSheet = document.createElement("style");
-        styleSheet.innerText = `@keyframes spin { 100% { transform:rotate(360deg); } }`;
-        document.head.appendChild(styleSheet);
+        async function loadExpensesForSelectedEvent() {
+            const container = document.getElementById("expenseList");
+            if (!selectedEventId) {
+                container.innerHTML = `<div class="expense-row"><div class="text-muted">Select an event to view submitted entries.</div></div>`;
+                return;
+            }
+
+            const response = await apiFetch(`/expenses/${selectedEventId}`);
+            const expenses = await response.json();
+            if (!expenses.length) {
+                container.innerHTML = `<div class="expense-row"><div class="text-muted">No expenses submitted for ${selectedEventName} yet.</div></div>`;
+                return;
+            }
+
+            container.innerHTML = expenses.slice().reverse().map((expense) => `
+                <div class="expense-row ${expense.receiptUrl ? "" : "expense-flag-warning"}" style="animation: fadeUp 0.45s ease both;">
+                    <div class="expense-row-top">
+                        <div>
+                            <strong>${expense.category}</strong>
+                            <div class="text-muted" style="margin-top:4px;">${new Date(expense.createdAt).toLocaleString("en-IN")}</div>
+                        </div>
+                        <div style="font-weight:800;">${formatCurrency(expense.amount)}</div>
+                    </div>
+                    <div class="flags-wrap" style="margin-top:12px;">${buildExpenseInsight(expense)}</div>
+                </div>
+            `).join("");
+        }
+
+        loadAllEvents().catch((error) => {
+            console.error(error);
+            showToast("Unable to connect to backend", "warning");
+        });
     </script>
 </body>
 </html>

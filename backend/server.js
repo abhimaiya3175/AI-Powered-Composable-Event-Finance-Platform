@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 const connectDB = require("./db");
 require("dotenv").config();
 
@@ -19,14 +20,15 @@ app.use(express.json());
 app.use("/events", require("./routes/eventRoutes"));
 app.use("/expenses", require("./routes/expenseRoutes"));
 
-app.use(express.static(__dirname));
+const frontendPath = path.join(__dirname, "..", "frontend");
+app.use(express.static(frontendPath));
 
 
 
 
 // Test route
 app.get("/", (req, res) => {
-  res.send("Event Finance Manager backend running");
+  res.sendFile(path.join(frontendPath, "index.html"));
 });
 
 const REQUESTED_PORT = Number(process.env.PORT) || 5000;

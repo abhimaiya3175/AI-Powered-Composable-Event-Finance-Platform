@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Role | Event Finance AI</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="page-transition">
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <a href="index.html" class="brand-logo"><span>EF</span> Event Finance AI</a>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="roles.html" class="nav-link active">Login</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="page-shell">
+        <section class="page-header">
+            <div class="eyebrow">Role-based access</div>
+            <h1 class="page-title" style="margin-top: 1rem;">Choose your <span class="accent">workspace</span></h1>
+            <p>Select the role you want to continue with. Each workspace is optimized for your finance workflow and stays connected to the current backend APIs.</p>
+        </section>
+
+        <section class="section" style="padding-bottom: 48px;">
+            <div class="role-grid">
+                <article class="role-card">
+                    <div>
+                        <div class="role-icon">📊</div>
+                        <h3>Event Admin</h3>
+                        <p class="text-muted">Monitor budgets, inspect category trends, review fraud alerts, and preview uploaded receipts in a polished analytics dashboard.</p>
+                    </div>
+                    <div>
+                        <div class="flags-wrap" style="margin-bottom: 1rem;">
+                            <span class="badge badge-danger">ml anomaly</span>
+                            <span class="badge badge-warning">ocr mismatch</span>
+                        </div>
+                        <a href="dashboard.html" class="btn btn-primary w-full">Continue as Event Admin</a>
+                    </div>
+                </article>
+                <article class="role-card">
+                    <div>
+                        <div class="role-icon">💼</div>
+                        <h3>Finance Manager</h3>
+                        <p class="text-muted">Create event portfolios, add expenses, upload receipts with progress feedback, and manage the latest finance activity from one workspace.</p>
+                    </div>
+                    <div>
+                        <div class="flags-wrap" style="margin-bottom: 1rem;">
+                            <span class="badge badge-success">verified</span>
+                            <span class="badge badge-info">upload flow</span>
+                        </div>
+                        <a href="add-event.html" class="btn btn-primary w-full">Continue as Finance Manager</a>
+                    </div>
+                </article>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="text-muted">Continue to the workspace that matches your operating role.</div>
+    </footer>
+</body>
+</html>

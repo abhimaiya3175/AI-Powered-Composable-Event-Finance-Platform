@@ -3,665 +3,435 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Event Finance Manager - Dashboard</title>
-    <!-- Prevent FOUC for dark mode -->
-    <script>
-        const storedTheme = localStorage.getItem('theme');
-        if (storedTheme === 'dark' || (!storedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.setAttribute('data-theme', 'dark');
-        }
-    </script>
+    <title>Dashboard - EventFi</title>
     <link rel="stylesheet" href="style.css">
-    <script src="config.js"></script>
-    <style>
-        .dashboard-shell {
-            display: grid;
-            gap: 1.2rem;
-        }
-
-        .dashboard-header {
-            display: grid;
-            grid-template-columns: repeat(12, minmax(0, 1fr));
-            gap: 1rem;
-        }
-
-        .dashboard-title-block {
-            grid-column: span 8;
-        }
-
-        .event-selector {
-            grid-column: span 4;
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) auto;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .dashboard-ribbon {
-            display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 0.6rem;
-        }
-
-        .ribbon-item {
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-md);
-            background: var(--bg-card);
-            box-shadow: var(--shadow-sm);
-            padding: 0.7rem 0.8rem;
-        }
-
-        .ribbon-item strong {
-            display: block;
-            font-family: var(--font-heading);
-            font-size: 0.83rem;
-            margin-bottom: 0.1rem;
-            color: var(--text-dark);
-        }
-
-        .ribbon-item span {
-            color: var(--text-muted);
-            font-size: 0.78rem;
-        }
-
-        .filter-bar {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 1rem;
-            flex-wrap: wrap;
-        }
-        .filter-bar input {
-            max-width: 250px;
-        }
-        .dashboard-main-grid {
-            display: grid;
-            grid-template-columns: minmax(0, 8fr) minmax(0, 4fr);
-            gap: 1.5rem;
-            margin-top: 1.5rem;
-        }
-
-        @media (max-width: 980px) {
-            .dashboard-title-block,
-            .event-selector {
-                grid-column: span 12;
-            }
-
-            .dashboard-ribbon {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-            }
-        }
-
-        @media (max-width: 1024px) {
-            .dashboard-main-grid { grid-template-columns: 1fr; }
-        }
-
-        @media (max-width: 640px) {
-            .dashboard-ribbon {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+    <script src="config.js" defer></script>
 </head>
 <body>
-
-    <!-- Toast Container -->
     <div id="toast-container"></div>
 
-    <!-- Navbar -->
-    <nav class="navbar">
-        <div class="brand-logo">
-            <span>🔷</span> EventFi
-        </div>
-        <div class="nav-links">
-            <a href="index.html" class="nav-link">Home</a>
-            <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
-                🌙
-            </button>
-        </div>
-    </nav>
-
-    <div class="container dashboard-shell">
-        <div class="dashboard-header">
-            <div class="dashboard-title-block">
-                <h1 style="font-weight: 800; font-size: 2rem; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
-                    Admin Dashboard
-                </h1>
-                <p class="text-muted" style="margin-top: 0.25rem;">Monitor budget utilization and AI anomaly detection</p>
-            </div>
-
-            <!-- Event Selector -->
-            <div class="event-selector">
-                <input id="eventId" class="form-control" placeholder="Paste Event ID" list="eventSuggestions">
-                <datalist id="eventSuggestions"></datalist>
-                <button onclick="loadDashboard()" class="btn btn-primary" id="loadBtn">Load Panel</button>
-            </div>
-        </div>
-
-        <div class="dashboard-ribbon" aria-label="dashboard context">
-            <div class="ribbon-item">
-                <strong>Grid View</strong>
-                <span>12-column responsive board</span>
-            </div>
-            <div class="ribbon-item">
-                <strong>Portfolio Data</strong>
-                <span>Live event and expense sync</span>
-            </div>
-            <div class="ribbon-item">
-                <strong>AI Signals</strong>
-                <span>Fraud and anomaly checks</span>
-            </div>
-            <div class="ribbon-item">
-                <strong>Operator Controls</strong>
-                <span>Search, sort, delete, review</span>
-            </div>
-        </div>
-
-        <!-- Initial Placeholder State using skeletons -->
-        <div id="placeholderState">
-            <div class="stats-grid">
-                <div class="stat-item"><div class="skeleton" style="height: 15px; width: 60%; margin-bottom: 10px;"></div><div class="skeleton" style="height: 35px; width: 40%;"></div></div>
-                <div class="stat-item"><div class="skeleton" style="height: 15px; width: 60%; margin-bottom: 10px;"></div><div class="skeleton" style="height: 35px; width: 40%;"></div></div>
-                <div class="stat-item"><div class="skeleton" style="height: 15px; width: 60%; margin-bottom: 10px;"></div><div class="skeleton" style="height: 35px; width: 40%;"></div></div>
-                <div class="stat-item"><div class="skeleton" style="height: 15px; width: 60%; margin-bottom: 10px;"></div><div class="skeleton" style="height: 35px; width: 40%;"></div></div>
-            </div>
-            <div style="display: flex; justify-content: center; opacity: 0.5; margin-top: 2rem;">
-                <p class="text-muted">Enter an Event ID above to populate data.</p>
-            </div>
-        </div>
-
-        <!-- Populated Dashboard (hidden by default) -->
-        <div id="dashboardContent" class="hidden">
-            
-            <!-- Stats Grid -->
-            <div class="stats-grid">
-                <div class="stat-item">
-                    <p>Total Budget</p>
-                    <h3 class="text-primary">₹<span class="animated-counter" id="budget">0</span></h3>
-                </div>
-                <div class="stat-item">
-                    <p>Total Spent</p>
-                    <h3 class="text-danger">₹<span class="animated-counter" id="spent">0</span></h3>
-                </div>
-                <div class="stat-item">
-                    <p>Remaining</p>
-                    <h3 class="text-success">₹<span class="animated-counter" id="remaining">0</span></h3>
-                </div>
-                <div class="stat-item">
-                    <p>% Consumed</p>
-                    <h3 style="color: var(--text-dark);"><span class="animated-counter" id="consumedPercent">0</span>%</h3>
-                    <div class="progress-container">
-                        <div class="progress-bar" id="budgetProgress"></div>
+    <div class="workspace no-sidebar">
+        <main class="workspace-main">
+            <div class="topbar">
+                <div class="topbar-left">
+                    <a href="index.html" class="brand-logo"><span>EF</span> Event Finance AI</a>
+                    <div class="nav-links">
+                        <a href="roles.html" class="nav-link">Roles</a>
                     </div>
+                    <div class="search-shell">
+                        <input type="text" class="form-control" id="globalSearch" placeholder="Search category, amount, or status">
+                    </div>
+                </div>
+                <div class="topbar-right">
+                    <button class="icon-btn" title="Notifications">🔔</button>
+                    <button class="avatar-btn">
+                        <span class="avatar-dot"></span>
+                        <span>Admin</span>
+                    </button>
                 </div>
             </div>
 
-            <!-- Main Split -->
-            <div class="dashboard-main-grid">
+            <section class="workspace-section card" id="overview">
+                <p class="text-muted">Event Admin</p>
+                <h1 class="page-title" style="font-size: clamp(2rem, 4vw, 3.2rem); margin-bottom: 10px;">Monitor live <span class="accent">event finance health</span></h1>
+                <p class="text-muted">Load an event to review budget usage, category spend, recent entries, and AI-generated fraud alerts from the current backend.</p>
+            </section>
 
-                <!-- Left Column: Table & Filters -->
-                <div class="card" style="margin-bottom: 0;">
-                    <div class="flex-row justify-between mb-4">
-                        <div class="card-title" style="margin:0;">Expense Report</div>
-                        <button onclick="toggleEventsList()" class="btn btn-outline" style="padding: 0.5rem 1rem; font-size: 0.8rem;">Browse Directory</button>
+            <section class="workspace-section card" id="load-event">
+                <div class="section-head">
+                    <div>
+                        <p class="text-muted">Load Event</p>
+                        <h3>Fetch a portfolio by event ID</h3>
                     </div>
-
-                    <!-- Hidden Events List -->
-                    <div id="eventsListContainer" class="hidden mb-4" style="background: var(--bg-body); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
-                        <ul id="eventsList" style="list-style: none; margin: 0; padding: 0; max-height: 200px; overflow-y: auto;"></ul>
-                    </div>
-
-                    <!-- Data Controls -->
-                    <div class="filter-bar">
-                        <input type="text" id="searchInput" class="form-control" placeholder="Search categories..." onkeyup="renderExpensesTable()">
-                        <select id="sortSelect" class="form-control" style="max-width: 200px;" onchange="renderExpensesTable()">
-                            <option value="newest">Newest First</option>
-                            <option value="amount-desc">Amount (High to Low)</option>
-                            <option value="amount-asc">Amount (Low to High)</option>
-                            <option value="az">Category (A-Z)</option>
-                        </select>
-                    </div>
-
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Category</th>
-                                    <th>Amount</th>
-                                    <th>Receipt</th>
-                                    <th style="width: 80px; text-align: right;">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="expenseTable">
-                                <!-- JS populated -->
-                            </tbody>
-                        </table>
+                    <div class="cta-row" style="width: min(100%, 520px);">
+                        <input id="eventId" class="form-control" placeholder="Enter event ID" list="eventSuggestions">
+                        <datalist id="eventSuggestions"></datalist>
+                        <button class="btn btn-primary" id="loadBtn">Load Data</button>
                     </div>
                 </div>
+                <div class="status-card" id="selectedEventSummary">
+                    <strong>No event loaded</strong>
+                    <div class="text-muted">Choose an event to populate KPI cards, charts, table rows, and fraud alerts.</div>
+                </div>
+            </section>
 
-                <!-- Right Column: Alerts & Chart -->
-                <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-                    
-                    <!-- AI Fraud Alerts -->
-                    <div class="card" id="alertsCard" style="margin: 0; border-top: 4px solid var(--warning);">
-                        <div class="card-title" style="margin-bottom: 1rem;">
-                            <span style="background:var(--warning-light); color:var(--warning); padding:0.25rem 0.5rem; border-radius: 4px; font-size:1rem; margin-right:5px;">⚠</span>
-                            AI Analysis
+            <section id="dashboardContent" class="hidden">
+                <section class="workspace-section kpi-grid">
+                    <article class="kpi-card">
+                        <div class="label">Total Budget</div>
+                        <strong class="text-primary">₹<span id="budget">0</span></strong>
+                        <div class="delta-text">Approved event budget</div>
+                    </article>
+                    <article class="kpi-card">
+                        <div class="label">Amount Spent</div>
+                        <strong class="text-danger">₹<span id="spent">0</span></strong>
+                        <div class="delta-text">All expense entries combined</div>
+                    </article>
+                    <article class="kpi-card">
+                        <div class="label">Remaining Budget</div>
+                        <strong class="text-success">₹<span id="remaining">0</span></strong>
+                        <div class="delta-text">Available working balance</div>
+                    </article>
+                    <article class="kpi-card">
+                        <div class="label">Budget Used</div>
+                        <strong><span id="consumedPercent">0</span>%</strong>
+                        <div class="progress-container" style="margin-top: 0.75rem;">
+                            <div class="progress-bar" id="budgetProgress"></div>
                         </div>
-                        <div id="alertsLoader" class="skeleton" style="height: 60px; width: 100%; display: none;"></div>
-                        <div id="alerts" style="display: flex; flex-direction: column; gap: 0.5rem;"></div>
-                    </div>
+                    </article>
+                </section>
 
-                    <!-- Category Breakdown Donut -->
-                    <div class="card" style="margin: 0; flex-grow: 1;">
-                        <div class="card-title">Category Breakdown</div>
+                <section class="workspace-section grid-12">
+                    <article class="chart-card span-6">
+                        <div class="chart-header">
+                            <div>
+                                <h3>Category-wise expenses</h3>
+                                <div class="chart-subtitle">Animated breakdown by expense category</div>
+                            </div>
+                        </div>
                         <div class="chart-container">
                             <div class="donut-chart" id="categoryChart">
                                 <div class="donut-hole"></div>
                             </div>
+                            <ul class="chart-legend" id="chartLegend"></ul>
+                        </div>
+                    </article>
+
+                    <article class="chart-card span-6">
+                        <div class="chart-header">
                             <div>
-                                <ul class="chart-legend" id="chartLegend">
-                                    <!-- JS populated -->
-                                </ul>
+                                <h3>Spending trends</h3>
+                                <div class="chart-subtitle">Recent five entries shown as a grow-in bar chart</div>
                             </div>
                         </div>
-                    </div>
+                        <div class="bar-chart" id="spendingTrendChart"></div>
+                    </article>
+                </section>
 
+                <section class="workspace-section grid-12">
+                    <article class="table-card span-8" id="expenses-table-card">
+                        <div class="table-toolbar">
+                            <div>
+                                <p class="text-muted">Expense Table</p>
+                                <h3>Recent expense activity</h3>
+                            </div>
+                            <div class="cta-row">
+                                <select id="statusFilter" class="form-control" style="width: 160px;">
+                                    <option value="all">All Statuses</option>
+                                    <option value="verified">Verified</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="flagged">Flagged</option>
+                                </select>
+                                <select id="sortSelect" class="form-control" style="width: 170px;">
+                                    <option value="newest">Newest First</option>
+                                    <option value="amount-desc">Highest Amount</option>
+                                    <option value="amount-asc">Lowest Amount</option>
+                                    <option value="category">Category</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Category</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                        <th>Receipt</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="expenseTable"></tbody>
+                            </table>
+                        </div>
+                    </article>
+
+                    <article class="chart-card span-4" id="alerts-card">
+                        <div class="chart-header">
+                            <div>
+                                <p class="text-muted">Fraud Alerts</p>
+                                <h3>AI and rule signals</h3>
+                            </div>
+                        </div>
+                        <div id="alertsLoader" class="skeleton" style="height: 120px; display: none;"></div>
+                        <div class="alert-list" id="alerts"></div>
+                    </article>
+                </section>
+            </section>
+        </main>
+    </div>
+
+    <div class="modal-overlay" id="receiptModal" onclick="closeModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="section-head" style="margin-bottom: 1rem;">
+                <div>
+                    <p class="text-muted">Receipt Preview</p>
+                    <h3>Uploaded receipt</h3>
                 </div>
-
+            </div>
+            <img id="receiptPreviewSrc" alt="Receipt preview" style="max-height: 420px; width: 100%; object-fit: contain; border-radius: var(--radius-lg); border: 1px solid var(--border-color); background: #111;">
+            <div class="cta-row" style="margin-top: 1rem;">
+                <button class="btn btn-outline w-full" onclick="closeModal()">Close</button>
             </div>
         </div>
     </div>
 
     <script>
-        // Core Utilities
-        let globalExpenses = []; // Store currently dragged expenses for sorting/filtering
-        const eventInput = document.getElementById("eventId");
-        
-        // Dark Mode Logic
-        const themeToggle = document.getElementById('themeToggle');
-        const rootElement = document.documentElement;
+        const chartColors = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4"];
+        let eventsCache = [];
+        let globalExpenses = [];
+        let loadedEvent = null;
 
-        function updateToggleIcon() {
-            const isDark = rootElement.getAttribute('data-theme') === 'dark';
-            themeToggle.innerHTML = isDark ? '☀️' : '🌙';
-        }
-        updateToggleIcon();
+        document.getElementById("loadBtn").addEventListener("click", loadDashboard);
+        document.getElementById("globalSearch").addEventListener("input", renderExpensesTable);
+        document.getElementById("sortSelect").addEventListener("change", renderExpensesTable);
+        document.getElementById("statusFilter").addEventListener("change", renderExpensesTable);
 
-        themeToggle.addEventListener('click', () => {
-            const currentTheme = rootElement.getAttribute('data-theme');
-            let newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            rootElement.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-            updateToggleIcon();
-            updateChartStyle(); // re-render charts to match theme changes
-        });
-
-        // Toast System
-        function showToast(message, type = 'success') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
+        function showToast(message, type = "success") {
+            const container = document.getElementById("toast-container");
+            const toast = document.createElement("div");
             toast.className = `toast toast-${type}`;
-            
-            let icon = '✅';
-            if(type === 'error') icon = '❌';
-            if(type === 'warning') icon = '⚠️';
-
-            toast.innerHTML = `<span>${icon}</span> <div>${message}</div>`;
+            toast.textContent = message;
             container.appendChild(toast);
-
             setTimeout(() => {
-                toast.classList.add('fade-out');
-                toast.addEventListener('animationend', () => toast.remove());
-            }, 3500);
+                toast.classList.add("fade-out");
+                setTimeout(() => toast.remove(), 300);
+            }, 3200);
         }
 
-        // Animation Utilities
-        function animateValue(obj, start, end, duration) {
-            let startTimestamp = null;
-            const step = (timestamp) => {
-                if (!startTimestamp) startTimestamp = timestamp;
-                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-                const current = Math.floor(progress * (end - start) + start);
-                obj.innerHTML = current.toLocaleString();
-                if (progress < 1) {
-                    window.requestAnimationFrame(step);
-                } else {
-                    // Final assure
-                    obj.innerHTML = end.toLocaleString();
-                }
-            };
-            window.requestAnimationFrame(step);
+        function animateValue(node, end, suffix = "") {
+            const start = performance.now();
+            const duration = 900;
+
+            function tick(now) {
+                const progress = Math.min((now - start) / duration, 1);
+                const current = Math.round(end * progress);
+                node.textContent = `${current.toLocaleString()}${suffix}`;
+                if (progress < 1) requestAnimationFrame(tick);
+            }
+
+            requestAnimationFrame(tick);
         }
 
-        // Color palettes for JS elements
-        const chartColors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#0ea5e9'];
+        function getExpenseStatus(expense) {
+            if (!expense.receiptUrl) return { label: "Pending", className: "badge-warning", key: "pending" };
+            if (Number(expense.amount) >= 100000) return { label: "Flagged", className: "badge-danger", key: "flagged" };
+            return { label: "Verified", className: "badge-success", key: "verified" };
+        }
 
-        function populateEventSuggestions(events) {
-            const eventSuggestions = document.getElementById("eventSuggestions");
-            eventSuggestions.innerHTML = "";
+        function updateEventSummary(event, spent, remaining) {
+            document.getElementById("selectedEventSummary").innerHTML = `
+                <strong>${event.name}</strong>
+                <div class="text-muted" style="margin-top: 6px;">ID ${event._id} · Budget ₹${Number(event.totalBudget).toLocaleString()} · Spent ₹${spent.toLocaleString()} · Remaining ₹${remaining.toLocaleString()}</div>
+            `;
+        }
 
-            events.forEach((event) => {
-                const option = document.createElement("option");
-                option.value = event._id;
-                option.label = `${event.name} (₹${event.totalBudget.toLocaleString()})`;
-                eventSuggestions.appendChild(option);
-            });
+        async function preloadEvents() {
+            const response = await apiFetch("/events");
+            eventsCache = await response.json();
+            const suggestions = document.getElementById("eventSuggestions");
+            suggestions.innerHTML = eventsCache.map((event) => `<option value="${event._id}" label="${event.name}"></option>`).join("");
         }
 
         async function loadDashboard() {
-            const eventId = eventInput.value.trim();
-            const btn = document.getElementById("loadBtn");
+            const eventId = document.getElementById("eventId").value.trim();
+            const button = document.getElementById("loadBtn");
+
             if (!eventId) {
-                showToast('Please enter an Event ID', 'error');
+                showToast("Enter an event ID", "error");
                 return;
             }
 
-            // UI Loading State
-            btn.innerHTML = `<span style="display:inline-block; animation: spin 1s linear infinite;">⏳</span> Loading`;
-            btn.disabled = true;
+            button.disabled = true;
+            button.innerHTML = '<span style="display:inline-block; animation: spin 1s linear infinite;">↻</span>';
 
             try {
-                // Fetch Event Data
-                const eventRes = await apiFetch("/events");
-                const events = await eventRes.json();
-                populateEventSuggestions(events);
+                if (!eventsCache.length) await preloadEvents();
+                loadedEvent = eventsCache.find((event) => event._id === eventId);
 
-                const normalizedQuery = eventId.toLowerCase();
-                const event = events.find(e => e._id === eventId || e.name.toLowerCase() === normalizedQuery);
-
-                if (!event) {
-                    showToast('Invalid Event ID or not found.', 'error');
-                    btn.innerHTML = "Load Panel";
-                    btn.disabled = false;
+                if (!loadedEvent) {
+                    showToast("Event not found", "error");
                     return;
                 }
 
-                // Keep input synchronized with actual selected event id.
-                eventInput.value = event._id;
+                const expensesResponse = await apiFetch(`/expenses/${eventId}`);
+                globalExpenses = await expensesResponse.json();
+                globalExpenses = globalExpenses.slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-                // Expose UI Containers
-                document.getElementById('placeholderState').classList.add('hidden');
-                document.getElementById('dashboardContent').classList.remove('hidden');
+                const spent = globalExpenses.reduce((sum, expense) => sum + Number(expense.amount || 0), 0);
+                const remaining = Math.max(0, Number(loadedEvent.totalBudget || 0) - spent);
+                const percent = loadedEvent.totalBudget > 0 ? Math.min(100, Math.round((spent / loadedEvent.totalBudget) * 100)) : 0;
 
-                // Animate Budget
-                animateValue(document.getElementById("budget"), 0, event.totalBudget, 1000);
+                document.getElementById("dashboardContent").classList.remove("hidden");
+                updateEventSummary(loadedEvent, spent, remaining);
+                animateValue(document.getElementById("budget"), Number(loadedEvent.totalBudget || 0));
+                animateValue(document.getElementById("spent"), spent);
+                animateValue(document.getElementById("remaining"), remaining);
+                animateValue(document.getElementById("consumedPercent"), percent);
 
-                // Fetch Expenses
-                const expRes = await apiFetch(`/expenses/${eventId}`);
-                globalExpenses = await expRes.json();
-                
-                // For demonstration, reverse array to simulate "newest first" originally
-                globalExpenses.reverse();
+                const progress = document.getElementById("budgetProgress");
+                progress.style.width = `${percent}%`;
+                progress.style.background = percent > 85 ? "var(--danger)" : (percent > 60 ? "var(--warning)" : "var(--success)");
 
-                let spent = 0;
-                globalExpenses.forEach(e => spent += e.amount);
-
-                // Animate Spent and Remaining
-                animateValue(document.getElementById("spent"), 0, spent, 1000);
-                animateValue(document.getElementById("remaining"), 0, Math.max(0, event.totalBudget - spent), 1000);
-
-                // Progress Bar Math
-                const percent = (event.totalBudget > 0) ? Math.min(100, Math.round((spent / event.totalBudget) * 100)) : 0;
-                animateValue(document.getElementById("consumedPercent"), 0, percent, 1000);
-                
-                const pBar = document.getElementById("budgetProgress");
-                pBar.style.width = '0%';
-                setTimeout(() => { pBar.style.width = percent + '%'; }, 100);
-
-                if(percent < 60) pBar.style.backgroundColor = 'var(--success)';
-                else if(percent < 85) pBar.style.backgroundColor = 'var(--warning)';
-                else pBar.style.backgroundColor = 'var(--danger)';
-
-                // Render Table
+                renderDonutChart();
+                renderTrendChart();
                 renderExpensesTable();
-
-                // Trigger async fraud checks
-                runFraudCheck(eventId);
-
-            } catch (err) {
-                console.error(err);
-                showToast("Error loading dashboard data. Make sure backend is running.", "error");
+                await runFraudCheck(eventId);
+                showToast("Dashboard updated");
+            } catch (error) {
+                console.error(error);
+                showToast("Unable to connect to backend", "error");
             } finally {
-                btn.innerHTML = "Load Panel";
-                btn.disabled = false;
+                button.disabled = false;
+                button.textContent = "Load Data";
             }
+        }
+
+        function renderDonutChart() {
+            const chart = document.getElementById("categoryChart");
+            const legend = document.getElementById("chartLegend");
+            if (!globalExpenses.length) {
+                chart.style.background = "conic-gradient(var(--border-color) 0% 100%)";
+                legend.innerHTML = '<li class="text-muted">No expense data loaded.</li>';
+                return;
+            }
+
+            const grouped = {};
+            globalExpenses.forEach((expense) => {
+                grouped[expense.category] = (grouped[expense.category] || 0) + Number(expense.amount || 0);
+            });
+
+            const total = Object.values(grouped).reduce((sum, value) => sum + value, 0);
+            let currentDegree = 0;
+            const gradientStops = [];
+
+            legend.innerHTML = Object.entries(grouped).map(([category, amount], index) => {
+                const degrees = (amount / total) * 360;
+                const color = chartColors[index % chartColors.length];
+                gradientStops.push(`${color} ${currentDegree}deg ${currentDegree + degrees}deg`);
+                currentDegree += degrees;
+                return `<li><span class="legend-color" style="background:${color}"></span><span>${category} · ₹${amount.toLocaleString()}</span></li>`;
+            }).join("");
+
+            chart.style.background = `conic-gradient(${gradientStops.join(", ")})`;
+        }
+
+        function renderTrendChart() {
+            const container = document.getElementById("spendingTrendChart");
+            if (!globalExpenses.length) {
+                container.innerHTML = '<div class="empty-state w-full">No spending trend available yet.</div>';
+                return;
+            }
+
+            const recent = globalExpenses.slice(0, 5).reverse();
+            const max = Math.max(...recent.map((expense) => Number(expense.amount || 0)), 1);
+
+            container.innerHTML = recent.map((expense, index) => {
+                const height = Math.max(18, Math.round((Number(expense.amount || 0) / max) * 180));
+                const label = new Date(expense.createdAt).toLocaleDateString("en-IN", { month: "short", day: "numeric" });
+                return `
+                    <div class="bar-chart-item">
+                        <div class="bar-chart-column" style="height:${height}px; animation-delay:${index * 0.08}s;"></div>
+                        <div class="bar-chart-label">${label}</div>
+                    </div>
+                `;
+            }).join("");
         }
 
         function renderExpensesTable() {
             const table = document.getElementById("expenseTable");
-            const search = document.getElementById("searchInput").value.toLowerCase();
-            const sortSelection = document.getElementById("sortSelect").value;
+            const searchValue = document.getElementById("globalSearch").value.trim().toLowerCase();
+            const sortValue = document.getElementById("sortSelect").value;
+            const statusFilter = document.getElementById("statusFilter").value;
 
-            // Clone to avoid mutating original
-            let filteredArray = [...globalExpenses];
+            let rows = globalExpenses.filter((expense) => {
+                const status = getExpenseStatus(expense);
+                const haystack = [
+                    expense.category,
+                    String(expense.amount),
+                    status.label
+                ].join(" ").toLowerCase();
 
-            // 1. Filter
-            if (search) {
-                filteredArray = filteredArray.filter(e => e.category.toLowerCase().includes(search));
-            }
-
-            // 2. Sort
-            if (sortSelection === 'amount-desc') {
-                filteredArray.sort((a, b) => b.amount - a.amount);
-            } else if (sortSelection === 'amount-asc') {
-                filteredArray.sort((a, b) => a.amount - b.amount);
-            } else if (sortSelection === 'az') {
-                filteredArray.sort((a, b) => a.category.localeCompare(b.category));
-            }
-            // newest is default assuming array logic
-
-            table.innerHTML = "";
-
-            if (filteredArray.length === 0) {
-                table.innerHTML = `<tr><td colspan="4" class="text-center text-muted" style="padding: 2rem;">No matching expenses found.</td></tr>`;
-            }
-
-            filteredArray.forEach(e => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td style="font-weight: 500;">
-                       <span class="badge" style="background:var(--slate-100); color:var(--slate-700); border:1px solid var(--border-color);">${e.category}</span>
-                    </td>
-                    <td style="font-variant-numeric: tabular-nums;">₹${e.amount.toLocaleString()}</td>
-                    <td>${e.receiptUrl ? `<a href="${e.receiptUrl}" target="_blank" style="text-decoration: underline; font-size:0.9rem;">View ↗</a>` : "<span class='text-danger' style='font-size:0.9rem;'>Missing</span>"}</td>
-                    <td style="text-align: right;">
-                        <button onclick="deleteExpense('${e._id}')" class="text-danger" style="background: none; border: none; font-weight: 600; cursor: pointer; padding:0.25rem 0.5rem; border-radius:4px; transition:background 0.2s;">✕ Delete</button>
-                    </td>
-                `;
-                table.appendChild(tr);
+                const matchesSearch = !searchValue || haystack.includes(searchValue);
+                const matchesStatus = statusFilter === "all" || status.key === statusFilter;
+                return matchesSearch && matchesStatus;
             });
 
-            // Re-render Donut Chart based on CURRENT filters or all global expenses? Usually visually better to show all
-            renderDonutChart(globalExpenses);
-        }
+            if (sortValue === "amount-desc") rows.sort((a, b) => Number(b.amount) - Number(a.amount));
+            if (sortValue === "amount-asc") rows.sort((a, b) => Number(a.amount) - Number(b.amount));
+            if (sortValue === "category") rows.sort((a, b) => a.category.localeCompare(b.category));
+            if (sortValue === "newest") rows.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-        function renderDonutChart(expenseArray) {
-            const donutChart = document.getElementById("categoryChart");
-            const legend = document.getElementById("chartLegend");
-            
-            if (expenseArray.length === 0) {
-                donutChart.style.background = `conic-gradient(var(--slate-200) 0% 100%)`;
-                legend.innerHTML = '<li class="text-muted text-sm">No expenses logged.</li>';
+            if (!rows.length) {
+                table.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No expenses match the current filters.</td></tr>';
                 return;
             }
 
-            // Group amounts by category
-            const categorySums = {};
-            let grandTotal = 0;
-            expenseArray.forEach(e => {
-                categorySums[e.category] = (categorySums[e.category] || 0) + e.amount;
-                grandTotal += e.amount;
-            });
+            table.innerHTML = rows.map((expense, index) => {
+                const status = getExpenseStatus(expense);
+                const receiptCell = expense.receiptUrl
+                    ? `<button class="btn btn-outline" style="padding:0.45rem 0.8rem;" onclick="viewReceipt('${expense.receiptUrl}')">View</button>`
+                    : '<span class="text-warning">Pending upload</span>';
 
-            // Convert to array and sort largest first
-            const sortedKeys = Object.keys(categorySums).sort((a,b) => categorySums[b] - categorySums[a]);
-
-            let gradientStops = [];
-            let currentDegrees = 0;
-            legend.innerHTML = "";
-
-            sortedKeys.forEach((key, index) => {
-                const total = categorySums[key];
-                const percentage = total / grandTotal;
-                const degrees = percentage * 360;
-                
-                const color = chartColors[index % chartColors.length];
-
-                gradientStops.push(`${color} ${currentDegrees}deg ${currentDegrees + degrees}deg`);
-                currentDegrees += degrees;
-
-                // Append Legend Item
-                legend.innerHTML += `
-                    <li>
-                        <div class="legend-color" style="background-color: ${color}"></div>
-                        <span style="font-weight:500;">${key}</span> 
-                        <span class="text-muted" style="margin-left:auto;">${(percentage*100).toFixed(1)}%</span>
-                    </li>
+                return `
+                    <tr style="animation: fadeUp 0.4s ease ${index * 0.05}s both;">
+                        <td>${new Date(expense.createdAt).toLocaleString("en-IN")}</td>
+                        <td><span class="badge badge-neutral">${expense.category}</span></td>
+                        <td>₹${Number(expense.amount || 0).toLocaleString()}</td>
+                        <td><span class="badge ${status.className}">${status.label}</span></td>
+                        <td>${receiptCell}</td>
+                    </tr>
                 `;
-            });
-
-            donutChart.style.background = `conic-gradient(${gradientStops.join(', ')})`;
-        }
-
-        // Used by dark mode toggle to repaint empty charts if needed, but not strictly necessary here.
-        function updateChartStyle() {
-            if(globalExpenses && globalExpenses.length === 0) renderDonutChart([]);
+            }).join("");
         }
 
         async function runFraudCheck(eventId) {
-            const alertBox = document.getElementById("alerts");
-            const alertLoader = document.getElementById("alertsLoader");
-            
-            alertBox.innerHTML = "";
-            alertLoader.style.display = "block";
+            const alerts = document.getElementById("alerts");
+            const loader = document.getElementById("alertsLoader");
+            alerts.innerHTML = "";
+            loader.style.display = "block";
 
             try {
-                const fraudRes = await apiFetch(`/events/check/${eventId}`);
-                const fraud = await fraudRes.json();
+                const response = await apiFetch(`/events/check/${eventId}`);
+                const payload = await response.json();
+                loader.style.display = "none";
 
-                alertLoader.style.display = "none";
-
-                if (fraud.alerts.length === 0) {
-                    alertBox.innerHTML = `
-                      <div style="display:flex; align-items:center; gap:0.5rem; padding: 1rem; border-radius: var(--radius-sm); border-left: 4px solid var(--success); background: var(--bg-card); border:1px solid var(--border-color);">
-                         <span style="font-size:1.2rem;">🛡️</span> 
-                         <span style="color:var(--text-dark); font-weight:500;">Coast is clear. No anomalies detected.</span>
-                      </div>`;
-                } else {
-                    fraud.alerts.forEach(a => {
-                        const isSevere = a.includes('exceeded') || a.toLowerCase().includes('high');
-                        const borderColor = isSevere ? 'var(--danger)' : 'var(--warning)';
-                        const bgHint = isSevere ? 'var(--danger-light)' : 'var(--warning-light)';
-                        
-                        // We map them creatively for aesthetic
-                        alertBox.innerHTML += `
-                        <div style="padding: 1rem; border-radius: var(--radius-sm); border-left: 4px solid ${borderColor}; background: var(--bg-card); border: 1px solid var(--border-color); display:flex; align-items:center; box-shadow: var(--shadow-sm); gap: 0.75rem;">
-                            <div style="background: ${bgHint}; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem; font-weight:bold; color: ${borderColor};">${isSevere ? 'HIGH' : 'WARN'}</div>
-                            <span style="font-size:0.95rem; color:var(--text-dark);">${a}</span>
-                        </div>`;
-                    });
-                }
-            } catch(e) {
-                alertLoader.style.display = "none";
-                alertBox.innerHTML = `<p class="text-danger">Analysis failed to reach backend.</p>`;
-            }
-        }
-
-        async function deleteExpense(id) {
-            // Very simple browser confirm until we implement modal globally if requested
-            if (!confirm("Delete this expense permanently?")) return;
-            try {
-                const res = await apiFetch(`/expenses/delete/${id}`, { method: "DELETE" });
-                if(res.ok) {
-                    showToast('Expense removed successfully');
-                    loadDashboard(); // reload entirely to sync budgets/check sums reliably
-                } else {
-                    showToast('Failed to delete expense', 'error');
-                }
-            } catch(err) {
-                showToast('API Error during deletion', 'error');
-            }
-        }
-
-        let eventsLoaded = false;
-        async function toggleEventsList() {
-            const container = document.getElementById("eventsListContainer");
-            if (container.classList.contains("hidden")) {
-                container.classList.remove("hidden");
-                if (!eventsLoaded) {
-                    await loadAllEvents();
-                    eventsLoaded = true;
-                }
-            } else {
-                container.classList.add("hidden");
-            }
-        }
-
-        async function loadAllEvents() {
-            const list = document.getElementById("eventsList");
-            list.innerHTML = `<li class="skeleton" style="height: 40px; margin-bottom:10px;"></li><li class="skeleton" style="height: 40px;"></li>`;
-
-            try {
-                const res = await apiFetch("/events");
-                const events = await res.json();
-                list.innerHTML = "";
-
-                if (events.length === 0) {
-                    list.innerHTML = "<li class='text-muted'>No active projects found.</li>";
+                if (!payload.alerts || !payload.alerts.length) {
+                    alerts.innerHTML = '<div class="alert-card success"><span class="badge badge-success">clear</span><div>No anomalies detected for this event.</div></div>';
                     return;
                 }
 
-                events.forEach(e => {
-                    const li = document.createElement("li");
-                    li.style.padding = "0.75rem";
-                    li.style.borderBottom = "1px solid var(--border-color)";
-                    li.style.display = "flex";
-                    li.style.justifyContent = "space-between";
-                    li.style.alignItems = "center";
-
-                    li.innerHTML = `
-                    <div style="display:flex; flex-direction:column;">
-                        <span style="font-weight:600; color:var(--text-dark);">${e.name}</span> 
-                        <span style="font-family: monospace; color: var(--text-muted); font-size: 0.8rem; margin-top:2px;">ID: ${e._id}</span>
-                    </div>
-                    <button onclick="copyToClipboard('${e._id}')" class="btn btn-outline" style="padding: 0.25rem 0.75rem; font-size:0.8rem;">Copy ID</button>
+                alerts.innerHTML = payload.alerts.map((alert, index) => {
+                    const lower = alert.toLowerCase();
+                    const type = lower.includes("ml") ? "danger" : (lower.includes("ocr") ? "warning" : "warning");
+                    const label = lower.includes("ml") ? "ML anomaly" : (lower.includes("ocr") ? "OCR mismatch" : "Rule flag");
+                    return `
+                        <div class="alert-card ${type}" style="animation-delay:${index * 0.08}s;">
+                            <span class="badge ${type === "danger" ? "badge-danger" : "badge-warning"}">${label}</span>
+                            <div>${alert}</div>
+                        </div>
                     `;
-                    list.appendChild(li);
-                });
-            } catch (err) {
-                list.innerHTML = `<li class="text-danger">Error fetching projects cache.</li>`;
-            }
-        }
-
-        function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                showToast("Copied to clipboard!");
-            });
-        }
-
-        async function bootstrapDashboard() {
-            try {
-                const eventRes = await apiFetch("/events");
-                const events = await eventRes.json();
-                populateEventSuggestions(events);
-
-                if (events.length === 0 || eventInput.value.trim()) return;
-
-                const newestEvent = [...events].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
-                eventInput.value = newestEvent._id;
-                await loadDashboard();
+                }).join("");
             } catch (error) {
-                // Keep the initial skeleton state when backend is temporarily unavailable.
+                console.error(error);
+                loader.style.display = "none";
+                alerts.innerHTML = '<div class="alert-card warning"><span class="badge badge-warning">Warning</span><div>Fraud checks could not be loaded.</div></div>';
             }
         }
 
-        eventInput.addEventListener("keydown", (event) => {
-            if (event.key === "Enter") {
-                loadDashboard();
-            }
-        });
+        function viewReceipt(url) {
+            document.getElementById("receiptPreviewSrc").src = url;
+            document.getElementById("receiptModal").classList.add("active");
+        }
 
-        bootstrapDashboard();
+        function closeModal() {
+            document.getElementById("receiptModal").classList.remove("active");
+        }
+
+        preloadEvents().catch((error) => {
+            console.error(error);
+            showToast("Unable to preload events", "warning");
+        });
     </script>
 </body>
 </html>
