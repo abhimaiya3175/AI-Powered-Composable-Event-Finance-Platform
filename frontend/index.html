@@ -1,212 +1,128 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EventFi - Smart Event Finance Management</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EventFi — AI Event Finance Platform</title>
+  <meta name="description" content="AI-powered event finance management with fraud detection, budget tracking, and expense intelligence.">
+  <link rel="stylesheet" href="style.css">
 </head>
-<body class="page-transition">
-    <div id="toast-container"></div>
+<body>
 
-    <nav class="navbar">
-        <div class="navbar-inner">
-            <a href="index.html" class="brand-logo"><span>EF</span> Event Finance AI</a>
-            <div class="nav-links">
-                <a href="index.html" class="nav-link active">Home</a>
-                <a href="#features" class="nav-link">Features</a>
-                <a href="#workflow" class="nav-link">How It Works</a>
-                <a href="roles.html" class="btn btn-primary">Get Started</a>
-            </div>
+  <!-- Navbar -->
+  <nav class="navbar" id="navbar">
+    <a href="index.html" class="nav-brand">
+      <img src="logo.png" alt="EventFi Logo">
+      EventFi
+    </a>
+    <div class="nav-links">
+      <a href="index.html" class="nav-link active">Home</a>
+      <a href="dashboard.html" class="nav-link">Dashboard</a>
+      <a href="add-event.html" class="nav-link">Events</a>
+      <a href="roles.html" class="btn btn-green" style="padding:6px 14px;">Get Started</a>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <main style="position:relative; z-index:1; max-width:960px; margin:0 auto; padding:80px 24px 60px;">
+
+    <section style="text-align:center; margin-bottom:80px;">
+      <div class="fade-in" style="display:inline-block; padding:4px 12px; border-radius:12px; border:1px solid rgba(88,166,255,.3); background:rgba(88,166,255,.08); color:var(--blue); font-size:12px; font-weight:600; margin-bottom:24px; text-transform:uppercase; letter-spacing:.05em;">AI-Powered Finance Controls</div>
+      <h1 class="fade-in" style="font-size:clamp(36px,5vw,56px); letter-spacing:-.03em; margin-bottom:24px; animation-delay:0.1s;">
+        Smart Event Finance<br><span class="accent">Management Platform</span>
+      </h1>
+      <p class="fade-in" style="color:var(--txt-dim); font-size:16px; max-width:600px; margin:0 auto 32px; animation-delay:0.2s;">
+        Real-time budget tracking, ML-based fraud detection, OCR receipt verification, and role-based workspaces for modern event operations.
+      </p>
+      <div class="cta-row fade-in" style="justify-content:center; animation-delay:0.3s;">
+        <a href="roles.html" class="btn btn-green">Get Started</a>
+        <a href="dashboard.html" class="btn btn-outline">View Dashboard</a>
+      </div>
+    </section>
+
+    <!-- Stats -->
+    <section class="kpi-grid fade-in" style="margin-bottom:64px;">
+      <div class="kpi-card" style="text-align:center;">
+        <span class="kpi-value text-blue" data-count="98" data-suffix="%">0</span>
+        <span class="kpi-label">Verification Coverage</span>
+      </div>
+      <div class="kpi-card" style="text-align:center;">
+        <span class="kpi-value text-green">24/7</span>
+        <span class="kpi-label">Anomaly Monitoring</span>
+      </div>
+      <div class="kpi-card" style="text-align:center;">
+        <span class="kpi-value text-hi" data-count="3" data-suffix="x">0</span>
+        <span class="kpi-label">Faster Closeout</span>
+      </div>
+      <div class="kpi-card" style="text-align:center;">
+        <span class="kpi-value text-hi" data-count="1240" data-suffix="+">0</span>
+        <span class="kpi-label">Receipts Processed</span>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section style="margin-bottom:64px;" class="fade-in">
+      <h2 style="margin-bottom:20px;">Core Platform</h2>
+      <div class="grid-12">
+        <div class="col-4 card feature-card">
+          <div class="feature-icon" style="font-size:24px; margin-bottom:12px;">💸</div>
+          <h3>Budget Tracking</h3>
+          <p class="text-dim" style="margin-top:8px; font-size:13px;">Real-time KPI cards for total budget, spent, remaining, and burn-rate monitoring.</p>
         </div>
-    </nav>
-
-    <main class="page-shell">
-        <section class="hero">
-            <div class="hero-card">
-                <div class="hero-copy">
-                    <div class="eyebrow">AI-powered controls for every spend</div>
-                    <h1>Smart Event Finance <span class="accent">Management</span></h1>
-                    <p>
-                        Run event finance operations with live budget visibility, AI-backed fraud detection,
-                        receipt intelligence, and role-based workspaces built for Event Admins and Finance Managers.
-                    </p>
-                    <div class="cta-row">
-                        <a href="roles.html" class="btn btn-primary">Get Started</a>
-                        <a href="#workflow" class="btn btn-outline">View Demo</a>
-                    </div>
-                    <div class="hero-stats">
-                        <div class="stat-tile">
-                            <strong data-target="98" data-suffix="%">0</strong>
-                            <span class="text-muted">expense verification coverage</span>
-                        </div>
-                        <div class="stat-tile">
-                            <strong>24/7</strong>
-                            <span class="text-muted">AI anomaly monitoring</span>
-                        </div>
-                        <div class="stat-tile">
-                            <strong data-target="3" data-suffix="x">0</strong>
-                            <span class="text-muted">faster event closeout</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="hero-visual">
-                    <div class="dashboard-preview">
-                        <div class="preview-top">
-                            <div class="preview-chip"></div>
-                            <div class="preview-chip"></div>
-                            <div class="preview-chip"></div>
-                        </div>
-                        <div class="preview-bottom">
-                            <div class="preview-panel">
-                                <div class="text-muted" style="margin-bottom: 12px;">Budget Overview</div>
-                                <div class="preview-bars">
-                                    <span></span><span></span><span></span><span></span><span></span>
-                                </div>
-                            </div>
-                            <div class="preview-panel">
-                                <div class="text-muted" style="margin-bottom: 12px;">Category Split</div>
-                                <div class="preview-donut"></div>
-                            </div>
-                        </div>
-                        <div class="preview-bottom" style="margin-top: 0.75rem;">
-                            <div class="preview-panel">
-                                <div class="text-muted" style="margin-bottom: 12px;">Live Verification</div>
-                                <div class="flags-wrap">
-                                    <span class="badge badge-danger">ml anomaly</span>
-                                    <span class="badge badge-warning">ocr mismatch</span>
-                                    <span class="badge badge-success">verified</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="section" id="features">
-            <div class="section-card">
-                <div class="section-head">
-                    <div>
-                        <p class="text-muted">Core platform</p>
-                        <h2 class="section-title">Purpose-built for <span class="accent">modern finance ops</span></h2>
-                    </div>
-                </div>
-                <div class="feature-grid">
-                    <article class="feature-card">
-                        <div class="feature-icon">💸</div>
-                        <h3>Budget Tracking</h3>
-                        <p class="text-muted">Monitor total budget, amount spent, remaining budget, and burn rate with real-time KPI cards.</p>
-                    </article>
-                    <article class="feature-card">
-                        <div class="feature-icon">🛡️</div>
-                        <h3>Fraud Detection</h3>
-                        <p class="text-muted">Rule-based flags, ML anomaly signals, and OCR mismatch checks surface suspicious transactions early.</p>
-                    </article>
-                    <article class="feature-card">
-                        <div class="feature-icon">✨</div>
-                        <h3>AI Insights</h3>
-                        <p class="text-muted">Visual dashboards and verification badges make it easy to review expense health at a glance.</p>
-                    </article>
-                </div>
-            </div>
-        </section>
-
-        <section class="section" id="workflow">
-            <div class="section-card">
-                <div class="section-head">
-                    <div>
-                        <p class="text-muted">How it works</p>
-                        <h2 class="section-title">Simple 3-step finance flow</h2>
-                    </div>
-                </div>
-                <div class="steps-grid">
-                    <article class="step-card">
-                        <div class="step-number">01</div>
-                        <h3>Create or select an event</h3>
-                        <p class="text-muted">Finance Managers initialize event portfolios with budget caps and operating context.</p>
-                    </article>
-                    <article class="step-card">
-                        <div class="step-number">02</div>
-                        <h3>Submit expenses with receipts</h3>
-                        <p class="text-muted">Upload proofs, classify categories, and track submission progress with instant feedback.</p>
-                    </article>
-                    <article class="step-card">
-                        <div class="step-number">03</div>
-                        <h3>Review insights and alerts</h3>
-                        <p class="text-muted">Event Admins load dashboards, explore charts, and act on flagged transactions quickly.</p>
-                    </article>
-                </div>
-            </div>
-        </section>
-
-        <section class="section">
-            <div class="testimonials-grid">
-                <div class="section-card">
-                    <p class="text-muted">What teams say</p>
-                    <h2 class="section-title">Trusted by operations and finance teams</h2>
-                    <div class="quote-card" style="margin-top: 18px;">
-                        <p>"We replaced spreadsheet chaos with one live dashboard. Finance review time dropped from hours to minutes."</p>
-                        <div class="text-muted" style="margin-top: 12px;">Aarav Sharma, Event Operations Lead</div>
-                    </div>
-                </div>
-                <div class="section-card">
-                    <p class="text-muted">Platform stats</p>
-                    <div class="stats-band" style="margin-top: 16px;">
-                        <div class="quote-card">
-                            <strong data-target="12" data-prefix="₹" data-suffix="M">0</strong>
-                            <span class="text-muted">tracked budgets</span>
-                        </div>
-                        <div class="quote-card">
-                            <strong data-target="1240" data-suffix="+">0</strong>
-                            <span class="text-muted">receipts reviewed</span>
-                        </div>
-                        <div class="quote-card">
-                            <strong data-target="87">0</strong>
-                            <span class="text-muted">high-risk alerts caught</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-    </main>
-
-    <footer class="footer">
-        <div class="section-card" style="padding: 1rem 1.25rem;">
-            <div class="section-head" style="margin-bottom: 0;">
-                <div>
-                    <strong>Event Finance AI</strong>
-                    <div class="text-muted">Modern event budgeting, receipt intelligence, and anomaly monitoring.</div>
-                </div>
-                <div class="text-muted">Designed for a fast landing-to-workspace flow.</div>
-            </div>
+        <div class="col-4 card feature-card">
+          <div class="feature-icon" style="font-size:24px; margin-bottom:12px;">🛡️</div>
+          <h3>Fraud Detection</h3>
+          <p class="text-dim" style="margin-top:8px; font-size:13px;">Rule-based flags, ML anomaly detection, and OCR mismatch alerts surface suspicious activity.</p>
         </div>
-    </footer>
+        <div class="col-4 card feature-card">
+          <div class="feature-icon" style="font-size:24px; margin-bottom:12px;">📊</div>
+          <h3>Visual Analytics</h3>
+          <p class="text-dim" style="margin-top:8px; font-size:13px;">Pie charts, bar graphs, and verification badges for at-a-glance expense health.</p>
+        </div>
+      </div>
+    </section>
 
-    <script>
-        function animateCounter(node, endValue, prefix = "", suffix = "") {
-            const duration = 1200;
-            const start = performance.now();
+    <!-- Workflow -->
+    <section style="margin-bottom:64px;" class="fade-in">
+      <h2 style="margin-bottom:20px;">How It Works</h2>
+      <div class="grid-12">
+        <div class="col-4 card feature-card">
+          <div class="feature-icon" style="font-size:26px; font-weight:800; color:var(--blue); margin-bottom:12px;">01</div>
+          <h3>Create Event</h3>
+          <p class="text-dim" style="margin-top:8px; font-size:13px;">Finance Managers set up event portfolios with budget caps and context.</p>
+        </div>
+        <div class="col-4 card feature-card">
+          <div class="feature-icon" style="font-size:26px; font-weight:800; color:var(--blue); margin-bottom:12px;">02</div>
+          <h3>Submit Expenses</h3>
+          <p class="text-dim" style="margin-top:8px; font-size:13px;">Upload receipts, classify categories, and track submission progress.</p>
+        </div>
+        <div class="col-4 card feature-card">
+          <div class="feature-icon" style="font-size:26px; font-weight:800; color:var(--blue); margin-bottom:12px;">03</div>
+          <h3>Review Insights</h3>
+          <p class="text-dim" style="margin-top:8px; font-size:13px;">Event Admins explore dashboards, charts, and act on flagged transactions.</p>
+        </div>
+      </div>
+    </section>
 
-            function tick(now) {
-                const progress = Math.min((now - start) / duration, 1);
-                const current = Math.round(endValue * progress);
-                node.textContent = `${prefix}${current.toLocaleString()}${suffix}`;
-                if (progress < 1) requestAnimationFrame(tick);
-            }
+  </main>
 
-            requestAnimationFrame(tick);
-        }
+  <footer style="position:relative; z-index:1; border-top:1px solid var(--border); padding:20px 24px; text-align:center;">
+    <span class="text-muted" style="font-size:12px;">EventFi — Modern event budgeting, receipt intelligence, and anomaly monitoring.</span>
+  </footer>
 
-        document.querySelectorAll("[data-target]").forEach((node) => {
-            animateCounter(
-                node,
-                Number(node.dataset.target),
-                node.dataset.prefix || "",
-                node.dataset.suffix || ""
-            );
-        });
-    </script>
+  <script>
+    // Counter animation
+    document.querySelectorAll('[data-count]').forEach(el => {
+      const end = +el.dataset.count;
+      const suffix = el.dataset.suffix || '';
+      const duration = 1200;
+      const start = performance.now();
+      (function tick(now) {
+        const p = Math.min((now - start) / duration, 1);
+        el.textContent = Math.round(end * p).toLocaleString() + suffix;
+        if (p < 1) requestAnimationFrame(tick);
+      })(start);
+    });
+  </script>
 </body>
 </html>
