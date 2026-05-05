@@ -10,7 +10,7 @@ const LOCAL_API_FALLBACK_URLS = [
 	"http://127.0.0.1:5000"
 ];
 
-const REMOTE_API_URL = "https://event-finance-manager.onrender.com";
+const REMOTE_API_URL = "https://ai-powered-composable-event-finance.onrender.com";
 const isLocalHost = ["", "localhost", "127.0.0.1"].includes(window.location.hostname);
 
 const API_FALLBACK_URLS = isLocalHost ? LOCAL_API_FALLBACK_URLS : [REMOTE_API_URL];
