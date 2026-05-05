@@ -1,7 +1,10 @@
 // ===========================================
 // API Configuration for Event Finance Manager
 // ===========================================
-// Uses local fallback URLs in development to avoid port conflicts.
+// In production the backend serves the frontend, so the API lives at the same origin.
+// In local dev, we probe multiple localhost ports to find the running server.
+
+const isLocalHost = ["", "localhost", "127.0.0.1"].includes(window.location.hostname);
 
 const LOCAL_API_FALLBACK_URLS = [
 	"http://localhost:5001",
@@ -10,10 +13,9 @@ const LOCAL_API_FALLBACK_URLS = [
 	"http://127.0.0.1:5000"
 ];
 
-const REMOTE_API_URL = "https://ai-powered-composable-event-finance.onrender.com";
-const isLocalHost = ["", "localhost", "127.0.0.1"].includes(window.location.hostname);
-
-const API_FALLBACK_URLS = isLocalHost ? LOCAL_API_FALLBACK_URLS : [REMOTE_API_URL];
+// In production, API is at the same origin (Express serves the frontend).
+// No need to hardcode any deployment URL — it's always the current origin.
+const API_FALLBACK_URLS = isLocalHost ? LOCAL_API_FALLBACK_URLS : [window.location.origin];
 let API_BASE_URL = API_FALLBACK_URLS[0];
 
 let resolvedApiBaseUrl = null;
