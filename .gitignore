@@ -1,15 +1,21 @@
-# Dependencies
+# ── Dependencies ──────────────────────────────────────────────────────────────
 node_modules/
 .npm/
-package-lock.json
 yarn.lock
 
-# Environment variables and secrets
+# Keep package-lock.json for reproducible installs (do NOT ignore it)
+# package-lock.json  ← intentionally NOT ignored
+
+# ── Environment Variables & Secrets ───────────────────────────────────────────
+# Never commit credentials. Add them as Render / Netlify env vars instead.
 .env
 .env.*
 !.env.example
 
-# Python cache
+# ── Cloudinary / Tesseract OCR assets ─────────────────────────────────────────
+*.traineddata
+
+# ── Python helper scripts (one-off, not part of the app) ──────────────────────
 __pycache__/
 *.py[cod]
 *$py.class
@@ -17,27 +23,24 @@ __pycache__/
 .Python
 pip-log.txt
 pip-delete-this-directory.txt
-
-# OCR trained data
-*.traineddata
-
-# Temporary build/helper scripts
 write_html.py
 rewrite_index.py
 
-# Logs
+# ── Logs ──────────────────────────────────────────────────────────────────────
 logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
 
-# Build and output directories
+# ── Build & Output Directories ────────────────────────────────────────────────
 build/
 dist/
 out/
+.output/
 
-# OS files
+# ── OS-Generated Files ────────────────────────────────────────────────────────
 .DS_Store
 .DS_Store?
 ._*
@@ -45,8 +48,9 @@ out/
 .Trashes
 ehthumbs.db
 Thumbs.db
+Desktop.ini
 
-# IDE and Editor directories
+# ── IDE & Editor ──────────────────────────────────────────────────────────────
 .vscode/
 .idea/
 *.suo
@@ -56,12 +60,19 @@ Thumbs.db
 *.sw?
 *.iml
 
-# Deployment
+# ── Deployment Configs ────────────────────────────────────────────────────────
 .netlify/
 .vercel/
 .env.local
 .env.production
+.env.staging
 
-# Cache
+# ── Cache ─────────────────────────────────────────────────────────────────────
 .cache/
 *.cache
+.parcel-cache/
+
+# ── Temporary / Scratch Files ─────────────────────────────────────────────────
+*.tmp
+*.temp
+/tmp/
