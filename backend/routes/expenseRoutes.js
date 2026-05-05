@@ -15,6 +15,20 @@ cloudinary.config({
 // Multer config (memory storage)
 const upload = multer({ storage: multer.memoryStorage() });
 
+// Helper: upload buffer to Cloudinary via a proper Promise wrapper
+function uploadToCloudinary(fileBuffer) {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder: "receipts" },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result);
+      }
+    );
+    stream.end(fileBuffer);
+  });
+}
+
 // ADD EXPENSE WITH RECEIPT
 router.post("/add", upload.single("receipt"), async (req, res) => {
   try {
@@ -27,39 +41,29 @@ router.post("/add", upload.single("receipt"), async (req, res) => {
     let receiptUrl = "";
 
     if (req.file) {
-      const result = await cloudinary.uploader.upload_stream(
-        { folder: "receipts" },
-        async (error, result) => {
-          if (error) throw error;
-
-          receiptUrl = result.secure_url;
-
-          const expense = new Expense({
-            eventId,
-            amount,
-            category,
-            receiptUrl
-          });
-
-          await expense.save();
-          res.status(201).json(expense);
-        }
-      );
-
-      result.end(req.file.buffer);
-    } else {
-      const expense = new Expense({
-        eventId,
-        amount,
-        category,
-        receiptUrl
-      });
-
-      await expense.save();
-      res.status(201).json(expense);
+      try {
+        console.log(`Uploading receipt (${req.file.originalname}, ${req.file.size} bytes) to Cloudinary...`);
+        const uploadResult = await uploadToCloudinary(req.file.buffer);
+        receiptUrl = uploadResult.secure_url;
+        console.log(`Receipt uploaded: ${receiptUrl}`);
+      } catch (uploadError) {
+        console.error("Cloudinary upload failed:", uploadError.message);
+        // Continue saving the expense without the receipt URL
+      }
     }
 
+    const expense = new Expense({
+      eventId,
+      amount,
+      category,
+      receiptUrl
+    });
+
+    await expense.save();
+    res.status(201).json(expense);
+
   } catch (error) {
+    console.error("Expense creation error:", error.message);
     res.status(500).json({ error: error.message });
   }
 });

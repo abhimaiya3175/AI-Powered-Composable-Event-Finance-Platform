@@ -20,13 +20,24 @@ app.use(express.json());
 app.use("/events", require("./routes/eventRoutes"));
 app.use("/expenses", require("./routes/expenseRoutes"));
 
+// Health/diagnostics endpoint
+app.get("/health", (req, res) => {
+  res.json({
+    status: "ok",
+    mongo: !!process.env.MONGO_URI,
+    cloudinary: {
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME || "(not set)",
+      api_key_set: !!process.env.CLOUDINARY_API_KEY,
+      api_secret_set: !!process.env.CLOUDINARY_API_SECRET
+    },
+    node_env: process.env.NODE_ENV || "development"
+  });
+});
+
 const frontendPath = path.join(__dirname, "..", "frontend");
 app.use(express.static(frontendPath));
 
-
-
-
-// Test route
+// Serve frontend index for root
 app.get("/", (req, res) => {
   res.sendFile(path.join(frontendPath, "index.html"));
 });
